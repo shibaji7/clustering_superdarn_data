@@ -258,14 +258,18 @@ class GMMAlgorithm(Algorithm):
         n_clusters = self.params['n_clusters']
         cov = self.params['cov']
         estimator = GaussianMixture(n_components=n_clusters,
-                                    covariance_type=cov, max_iter=500,
+                                    covariance_type=cov, max_iter=100, reg_covar=1e-3,
                                     random_state=0, n_init=5, init_params='kmeans')
         t0 = time.time()
         estimator.fit(data)
         runtime = time.time() - t0
         clust_flg = estimator.predict(data)
         clust_prob = estimator.predict_proba(data)
+        self._bic = estimator.bic(data)
         return clust_flg, runtime, clust_prob, estimator
+
+    def _bic(self, data):
+        return self._bic
 
 
     def _gmm_on_existing_clusters(self, data, clust_flg):

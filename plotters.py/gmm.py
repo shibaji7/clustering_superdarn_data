@@ -32,32 +32,71 @@
 
 # In[1]:
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 import sys
 sys.path.insert(0, '..')
 from algorithms.gmm import GMM
 import datetime
+import numpy as np
+import itertools
 
 start_time = datetime.datetime(2017, 4, 4)
 end_time = datetime.datetime(2017, 4, 5)
-gmm = GMM(start_time, end_time, 'cvw', cov='full', n_clusters=10, BoxCox=True, load_model=True, save_model=False)
+gmm = GMM(start_time, end_time, 'cvw', cov='full', n_clusters=10, BoxCox=True, load_model=False, save_model=False)
 print(gmm.runtime)
 
 
 # In[2]:
 
 
-get_ipython().run_line_magic('matplotlib', 'inline')
+#get_ipython().run_line_magic('matplotlib', 'inline')
 # Make RTI plots to compare AJ's threshold with traditional threshold
-gmm.plot_rti(14, 'Ribiero')           # Slooow
+#gmm.plot_rti(14, 'Ribiero')           # Slooow
 # Make fanplots of the individual clusters over some time period
-fanplot_start = datetime.datetime(2017, 4, 4, 4, 0, 0)
-fanplot_end = datetime.datetime(2017, 4, 4, 4, 0, 0)
-gmm.plot_fanplots(fanplot_start, fanplot_end)
+#fanplot_start = datetime.datetime(2017, 4, 4, 4, 0, 0)
+#fanplot_end = datetime.datetime(2017, 4, 4, 4, 0, 0)
+#gmm.plot_fanplots(fanplot_start, fanplot_end)
 
 
 # In[ ]:
 
+#lowest_bic = np.infty
+#bic = []
+#n_components_range = range(1, 31)
+#cv_types = ['spherical', 'full']
+#for cv_type in cv_types:
+#    for n_components in n_components_range:
+#        # Fit a Gaussian mixture with EM
+#        gmm = GMM(start_time, end_time, 'cvw', cov=cv_type, n_clusters=n_components, BoxCox=True, load_model=False, save_model=False)
+#        bic.append(gmm._bic)
+#        if bic[-1] < lowest_bic:
+#            lowest_bic = bic[-1]
+#            best_gmm = gmm
 
+#bic = np.array(bic)
+#color_iter = itertools.cycle(['navy','darkorange'])
+#clf = best_gmm
+#bars = []
 
-
+# Plot the BIC scores
+#plt.figure(figsize=(5, 3))
+#spl = plt.subplot(1, 1, 1)
+#for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
+#    xpos = np.array(n_components_range) + .2 * (i - 2)
+#    bars.append(plt.bar(xpos, bic[i * len(n_components_range):
+#        (i + 1) * len(n_components_range)],
+#        width=.2, color=color))
+#plt.xticks(n_components_range[::3])
+#plt.yscale("log")
+#plt.ylim([bic.min() * 1.01 - .01 * bic.max(), bic.max()])
+#plt.title('BIC score per model')
+#xpos = np.mod(bic.argmin(), len(n_components_range)) + .65 +\
+#        .2 * np.floor(bic.argmin() / len(n_components_range))
+#plt.text(xpos, bic.min() * 0.97 + .03 * bic.max(), '*', fontsize=14)
+#spl.set_xlabel('Number of components')
+#spl.legend([b[0] for b in bars], cv_types)
+#plt.savefig("../plots/bic.png", bbox_inches="tight")

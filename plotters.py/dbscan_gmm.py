@@ -64,9 +64,9 @@ sys.path.insert(0, '..')
 from algorithms.dbscan_gmm import DBSCAN_GMM
 import datetime
 
-start_time = datetime.datetime(2018, 4, 5)
-end_time = datetime.datetime(2018, 4, 6)
-dbgmm = DBSCAN_GMM(start_time, end_time, 'sas', BoxCox=True, load_model=False, save_model=True)
+start_time = datetime.datetime(2017, 4, 4)
+end_time = datetime.datetime(2017, 4, 5)
+dbgmm = DBSCAN_GMM(start_time, end_time, 'cvw', BoxCox=True, load_model=False, save_model=True)
 print(dbgmm.runtime)
 
 
@@ -81,7 +81,8 @@ fanplot_start =  datetime.datetime(2017, 4, 4, 4, 0, 0)
 fanplot_end =  datetime.datetime(2017, 4, 4, 4, 0, 0)
 dbgmm.plot_fanplots(fanplot_start, fanplot_end, save_fig=False, vel_max=200, vel_step=25)
 
-
+dbgmm = DBSCAN_GMM(start_time, end_time, 'cvw', BoxCox=True, load_model=False, save_model=True, run_gmm=False)
+print(dbgmm.runtime)
 # In[ ]:
 
 

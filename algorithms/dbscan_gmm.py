@@ -19,7 +19,8 @@ class DBSCAN_GMM(GMMAlgorithm):
                  BoxCox=False,  # GMM
                  load_model=False,
                  save_model=False,
-                 save_output=True):
+                 save_output=True,
+                 run_gmm=True):
         super().__init__(start_time, end_time, rad,
                          {'scan_eps' : scan_eps,
                           'beam_eps': beam_eps,
@@ -31,17 +32,34 @@ class DBSCAN_GMM(GMMAlgorithm):
                           'features': features,
                           'BoxCox': BoxCox},
                          load_model=load_model)
+        filepath = self._get_base_output_path()+"_dbgmm.csv"
         if not load_model:
-            clust_flg, self.runtime = self._dbscan_gmm()
-            # Randomize flag #'s so that colors on plots are not close to each other
-            # (necessary for large # of clusters, but not for small #s)
-            self.clust_flg = self._1D_to_scanxscan(clust_flg)
-            print('DBSCAN+GMM clusters: ' + str(np.max(clust_flg)))
+            if run_gmm:
+                clust_flg, self.runtime = self._dbscan_gmm()
+                # Randomize flag #'s so that colors on plots are not close to each other
+                # (necessary for large # of clusters, but not for small #s)
+                self.clust_flg = self._1D_to_scanxscan(clust_flg)
+                print('DBSCAN+GMM clusters: ' + str(np.max(clust_flg)))
+            else:
+                filepath = self._get_base_output_path()+"_db.csv"
+                clust_flg, self.runtime = self._dbscan()
+                self.clust_flg = self._1D_to_scanxscan(clust_flg)
+                print('DBSCAN clusters: ' + str(np.max(clust_flg)))
         if save_model:
             self._save_model()
         if save_output:
-            self._save_output()
+            self._save_output(filepath)
 
+    def _dbscan(self):
+        X = self._get_dbscan_data_array()
+        t0 = time.time()
+        db = DBSCAN(eps=self.params['eps'],
+                min_samples=self.params['min_pts']
+                ).fit(X)
+        db_runtime = time.time() - t0
+        # Print # of clusters created by DBSCAN
+        db_flg = db.labels_
+        return db_flg, db_runtime
 
     def _dbscan_gmm(self):
         # Run DBSCAN on space/time features
@@ -73,8 +91,7 @@ class DBSCAN_GMM(GMMAlgorithm):
         return data
 
 
-    def _save_output(self):
-        filepath = self._get_base_output_path()+"_dbgmm.csv"
+    def _save_output(self, filepath):
         self.data_dict['clust_flg'] = self.clust_flg
         df = pd.DataFrame.from_dict(self.data_dict)
         df.to_csv(filepath)

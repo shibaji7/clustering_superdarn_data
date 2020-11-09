@@ -183,7 +183,7 @@ class RangeTimePlot(object):
 
 
 
-    def addClusterPlot(self, data_dict, clust_flg, beam, title, show_closerange=True, xlabel=''):
+    def addClusterPlot(self, data_dict, clust_flg, beam, title, show_closerange=True, xlabel='', label_clusters=False, skill=None):
         # add new axis
         self.cluster_ax = self._add_axis()
         # set up variables for plotter
@@ -202,8 +202,13 @@ class RangeTimePlot(object):
         # Lower bound for cmap is inclusive, upper bound is non-inclusive
         bounds = list(range(int(np.min(flags)), int(np.max(flags))+2))    # need (max_cluster+1) to be the upper bound
         self._create_colormesh(self.cluster_ax, time, gate, flags, mask, bounds, cmap, xlabel,
-                               label_clusters=True)
+                               label_clusters=label_clusters)
         self.cluster_ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
+        if skill is not None:
+            txt = r"CH = %.1f, BH = %.1f $\times 10^{6}$"%(skill.chscore, skill.bhscore/1e6) +"\n"+\
+                    "H = %.1f, Xu = %.1f"%(skill.hscore, skill.xuscore)
+            self.cluster_ax.text(0.8, 0.8, txt, horizontalalignment='center',
+                    verticalalignment='center', transform=self.cluster_ax.transAxes)
 
 
     def addGSISPlot(self, data_dict, gs_flg, beam, title, show_closerange=True, xlabel=''):
@@ -215,6 +220,7 @@ class RangeTimePlot(object):
         allbeam = np.hstack(data_dict['beam'])
         flags = np.hstack(gs_flg)
         mask = allbeam == beam
+        print(set(flags))
         if not show_closerange:
             mask = mask & (gate > 10)
         if -1 in flags:                     # contains noise flag
@@ -222,6 +228,12 @@ class RangeTimePlot(object):
                                               (1.0, 0.0, 0.0, 1.0),     # blue
                                               (0.0, 0.0, 1.0, 1.0)])    # red
             bounds = [-1, 0, 1, 2]      # Lower bound inclusive, upper bound non-inclusive
+        elif 2 in flags:
+            cmap = mpl.colors.ListedColormap([(0.0, 0.0, 0.0, 1.0),     # black
+                (1.0, 0.0, 0.0, 1.0),     # blue
+                (0.0, 0.0, 1.0, 1.0),     # red
+                (0.0, 1.0, 0.0, 1.0)])    # green
+            bounds = [-1, 0, 1, 2, 3]      # Lower bound inclusive, upper bound non-inclusive
         else:
             cmap = mpl.colors.ListedColormap([(1.0, 0.0, 0.0, 1.0),  # blue
                                               (0.0, 0.0, 1.0, 1.0)])  # red
@@ -251,14 +263,15 @@ class RangeTimePlot(object):
 
 
     def _tight_layout(self):
-        self.fig.tight_layout(rect=[0, 0, 0.9, 0.97])
+        #self.fig.tight_layout(rect=[0, 0, 0.9, 0.97])
+        return
 
     def show(self):
         plt.show()
 
 
     def save(self, filepath):
-        plt.savefig(filepath)
+        plt.savefig(filepath, bbox_inches="tight")
 
 
     def close(self):

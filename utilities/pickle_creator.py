@@ -5,6 +5,7 @@ import datetime as dt
 from time_utils import *
 import pandas as pd
 import pdb
+from get_sd_data import *
 
 #TODO this should live in dbtools eventually? idk... i wanna be able to run this script by itself
 
@@ -23,7 +24,7 @@ def get_datestr(year, month, day):
     return '%d-%02d-%02d' % (year, month, day)
 
 # Convert a .db file to a pickle or a csv
-def convert_db(date, rad, pickle=False):
+def convert_db(date, rad, pickle=True):
     year, month, day = date[0], date[1], date[2]
     start_time = dt.datetime(year, month, day)
     end_time = dt.datetime(year, month, day+1)
@@ -98,13 +99,62 @@ def convert_db(date, rad, pickle=False):
 
 
 """ Get data """
-rad = 'sas'
+rad = 'bks'
 
-dates = [(2017, 1, 17)]#, (2017, 3, 13), (2017, 4, 4), (2017, 5, 30), (2017, 8, 20),
+dates = [dt.datetime(2015, 3, 17)]#, (2017, 1, 17), (2017, 3, 13), (2017, 4, 4), (2017, 5, 30), (2017, 8, 20),
          #(2017, 9, 20), (2017, 10, 16), (2017, 11, 14), (2017, 12, 8), (2017, 12, 17),
          #(2017, 12, 18), (2017, 12, 19), (2018, 1, 25), (2018, 2, 7), (2018, 2, 8),
          #(2018, 3, 8), (2018, 4, 5)]
 
+def to_db(date, rad):
+    fdata = FetchData( rad, [date,
+                date + dt.timedelta(days=1)] )
+    _, scans = fdata.fetch_data(by="scan", scan_prop={"dur": 2, "stype": "themis"})
+    #recs = fdata.convert_to_pandas(_beams_)
+
+    gate_scans = []
+    beam_scans = []
+    vel_scans = []
+    wid_scans = []
+    time_scans = []
+    trad_gs_flg_scans = []
+    elv_scans = []
+
+    time = []
+    beam = []
+    freq = []
+    nsky = []
+    nsch = []
+    
+    bmax, nrang = 0, 0
+    for i in range(len(scans)):
+        s = scans[i]
+        g, bm, v, w, el, tr, tm, n, ns, f = [], [], [], [], [], [], [], [], [], []
+        for b in s.beams:
+            g.extend(np.array(b.slist).tolist())
+            bm.extend([b.bmnum]*len(b.slist))
+            v.extend(np.array(b.v).tolist())
+            w.extend(np.array(b.w_l).tolist())
+            tr.extend(np.array(b.gflg).tolist())
+            el.extend(np.array(b.elv).tolist())
+            tm.extend([date2num(b.time)]*len(b.slist))
+        if i==0: 
+            bmax = np.max(bm)
+            nrang = b.nrang
+        gate_scans.append(np.array(g))
+        beam_scans.append(np.array(bm))
+        vel_scans.append(np.array(v))
+        wid_scans.append(np.array(w))
+        time_scans.append(np.array(tm))
+        trad_gs_flg_scans.append(np.array(tr))
+        elv_scans.append(np.array(el))
+    data = {'gate' : gate_scans, 'beam' : beam_scans, 'vel' : vel_scans, 'wid': wid_scans,
+            'time' : time_scans, 'trad_gsflg' : trad_gs_flg_scans, 'elv': elv_scans, 
+            'nrang' : nrang, 'nbeam' : bmax + 1}
+    filename = "../data/%s_%s_scans" % (rad, date.strftime("%Y-%m-%d")) 
+    pickle.dump(data, open(filename+".pickle", 'wb'))
+    return
 
 for date in dates:
-    convert_db(date)
+    #convert_db(date, rad)
+    to_db(date, rad)

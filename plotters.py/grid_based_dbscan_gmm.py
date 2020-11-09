@@ -74,7 +74,7 @@ import datetime
 
 start_time = datetime.datetime(2017, 4, 4)
 end_time = datetime.datetime(2017, 4, 5)
-gbdb_gmm = GridBasedDBSCAN_GMM(start_time, end_time, 'cvw', load_model=True, save_model=False)
+gbdb_gmm = GridBasedDBSCAN_GMM(start_time, end_time, 'cvw', load_model=False, save_model=True)
 print(gbdb_gmm.runtime)
 
 
