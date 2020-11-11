@@ -99,7 +99,10 @@ def lower_range(df, gf=None):
 # In[2]:
 
 
-case = 0
+case = 0*1
+
+
+
 
 if case == 0:
     start_time = datetime.datetime(2017, 4, 4)
