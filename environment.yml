@@ -44,5 +44,4 @@ dependencies:
     - six==1.15.0
     - tables==3.6.1
     - threadpoolctl==2.0.0
-prefix: /home/shibaji/anaconda3/envs/gsoc
 

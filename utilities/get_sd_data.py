@@ -16,7 +16,7 @@ import pandas as pd
 import datetime as dt
 import glob
 import bz2
-import pydarn
+import pydarnio as pydarn
 import configparser
 
 

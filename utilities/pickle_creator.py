@@ -1,5 +1,5 @@
 import pickle
-from matplotlib.dates import date2num
+from matplotlib.dates import date2num, num2date
 from data_utils import read_db, get_scan_nums
 import datetime as dt
 from time_utils import *
@@ -99,9 +99,9 @@ def convert_db(date, rad, pickle=True):
 
 
 """ Get data """
-rad = 'bks'
+rad = 'cvw'
 
-dates = [dt.datetime(2015, 3, 17)]#, (2017, 1, 17), (2017, 3, 13), (2017, 4, 4), (2017, 5, 30), (2017, 8, 20),
+dates = [dt.datetime(2017, 4, 4)]#, (2017, 1, 17), (2017, 3, 13), (2017, 4, 4), (2017, 5, 30), (2017, 8, 20),
          #(2017, 9, 20), (2017, 10, 16), (2017, 11, 14), (2017, 12, 8), (2017, 12, 17),
          #(2017, 12, 18), (2017, 12, 19), (2018, 1, 25), (2018, 2, 7), (2018, 2, 8),
          #(2018, 3, 8), (2018, 4, 5)]
@@ -119,6 +119,7 @@ def to_db(date, rad):
     time_scans = []
     trad_gs_flg_scans = []
     elv_scans = []
+    power_scans = []
 
     time = []
     beam = []
@@ -129,7 +130,7 @@ def to_db(date, rad):
     bmax, nrang = 0, 0
     for i in range(len(scans)):
         s = scans[i]
-        g, bm, v, w, el, tr, tm, n, ns, f = [], [], [], [], [], [], [], [], [], []
+        g, bm, v, w, el, tr, tm, n, ns, f, pw = [], [], [], [], [], [], [], [], [], [], []
         for b in s.beams:
             g.extend(np.array(b.slist).tolist())
             bm.extend([b.bmnum]*len(b.slist))
@@ -138,6 +139,7 @@ def to_db(date, rad):
             tr.extend(np.array(b.gflg).tolist())
             el.extend(np.array(b.elv).tolist())
             tm.extend([date2num(b.time)]*len(b.slist))
+            pw.extend(np.array(b.p_l).tolist())
         if i==0: 
             bmax = np.max(bm)
             nrang = b.nrang
@@ -148,8 +150,9 @@ def to_db(date, rad):
         time_scans.append(np.array(tm))
         trad_gs_flg_scans.append(np.array(tr))
         elv_scans.append(np.array(el))
+        power_scans.append(np.array(pw))
     data = {'gate' : gate_scans, 'beam' : beam_scans, 'vel' : vel_scans, 'wid': wid_scans,
-            'time' : time_scans, 'trad_gsflg' : trad_gs_flg_scans, 'elv': elv_scans, 
+            'time' : time_scans, 'trad_gsflg' : trad_gs_flg_scans, 'elv': elv_scans, "pow":power_scans,
             'nrang' : nrang, 'nbeam' : bmax + 1}
     filename = "../data/%s_%s_scans" % (rad, date.strftime("%Y-%m-%d")) 
     pickle.dump(data, open(filename+".pickle", 'wb'))

@@ -7,6 +7,7 @@ from matplotlib import patches
 import matplotlib.patches as mpatches
 import random
 
+import utility
 
 class MultiDayPlotter:
 
@@ -260,7 +261,116 @@ class RangeTimePlot(object):
         self._tight_layout()    # need to do this before adding the colorbar, because it depends on the axis position
         self._add_colorbar(self.fig, self.vel_ax, bounds, cmap, label='Velocity [m/s]')
         self.vel_ax.set_title(title, loc='left', fontdict={'fontweight': 'bold'})
+        
+    def addParamPlot(self, df, beam, title, p_max=100, p_min=-100, p_step=25, xlabel='Time UT', zparam="v",
+                    label='Velocity [m/s]'):
+        ax = self._add_axis()
+        df = df[df.bmnum==beam]
+        X, Y, Z = utility.get_gridded_parameters(df, xparam="time", yparam="slist", zparam=zparam)
+        bounds = list(range(p_min, p_max+1, p_step))
+        cmap = plt.cm.jet
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        # cmap.set_bad('w', alpha=0.0)
+        # Configure axes
+        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        hours = mdates.HourLocator(byhour=range(0, 24, 4))
+        ax.xaxis.set_major_locator(hours)
+        ax.set_xlabel(xlabel)
+        ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
+        ax.set_ylim([0, self.nrang])
+        ax.set_ylabel('Range gate')
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+        self._tight_layout()
+        self._add_colorbar(self.fig, ax, bounds, cmap, label=label)
+        ax.set_title(title, loc='left', fontdict={'fontweight': 'bold'})
+        return
+    
+    def addCluster(self, df, beam, title, xlabel='', label_clusters=True, skill=None):
+        # add new axis
+        ax = self._add_axis()
+        df = df[df.bmnum==beam]
+        unique_labs = np.sort(np.unique(df.labels))
+        for i, j in zip(range(len(unique_labs)), unique_labs):
+            if j > 0:
+                df["labels"]=np.where(df["labels"]==j, i, df["labels"])
+        X, Y, Z = utility.get_gridded_parameters(df, xparam="time", yparam="slist", zparam="labels")
+        flags = df.labels
+        print(len(np.unique(flags)))
+        if -1 in flags:
+            cmap = get_cluster_cmap(len(np.unique(flags)), plot_noise=True)       # black for noise
+        else:
+            cmap = get_cluster_cmap(len(np.unique(flags)), plot_noise=False)
 
+        # Lower bound for cmap is inclusive, upper bound is non-inclusive
+        bounds = list(range( len(np.unique(flags))+2 ))    # need (max_cluster+1) to be the upper bound
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        hours = mdates.HourLocator(byhour=range(0, 24, 4))
+        ax.xaxis.set_major_locator(hours)
+        ax.set_xlabel(xlabel)
+        ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
+        ax.set_ylim([0, self.nrang])
+        ax.set_ylabel('Range gate')
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+        ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
+        if skill is not None:
+            txt = r"CH = %.1f, BH = %.1f $\times 10^{6}$"%(skill.chscore, skill.bhscore/1e6) +"\n"+\
+                    "H = %.1f, Xu = %.1f"%(skill.hscore, skill.xuscore)
+            ax.text(0.8, 0.8, txt, horizontalalignment='center',
+                    verticalalignment='center', transform=ax.transAxes)
+        if label_clusters:
+            num_flags = len(np.unique(flags))
+            for f in np.unique(flags):
+                flag_mask = Z.T==f
+                g = Y[flag_mask].astype(int)
+                t_c = X[flag_mask]
+                # Only label clusters large enough to be distinguishable on RTI map,
+                # OR label all clusters if there are few
+                if (len(t_c) > 250 or
+                   (num_flags < 50 and len(t_c) > 0)) \
+                   and f != -1:
+                    m = int(len(t_c) / 2)  # Time is sorted, so this is roughly the index of the median time
+                    ax.text(t_c[m], g[m], str(int(f)), fontdict={'size': 8, 'fontweight': 'bold'})  # Label cluster #
+        return
+    
+    def addGSIS(self, df, beam, title, xlabel=''):
+        # add new axis
+        ax = self._add_axis()
+        df = df[df.bmnum==beam]
+        X, Y, Z = utility.get_gridded_parameters(df, xparam="time", yparam="slist", zparam="gflg",)
+        flags = np.array(df.gflg).astype(int)
+        if -1 in flags and 2 in flags:                     # contains noise flag
+            cmap = mpl.colors.ListedColormap([(0.0, 0.0, 0.0, 1.0),     # black
+                (1.0, 0.0, 0.0, 1.0),     # blue
+                (0.0, 0.0, 1.0, 1.0),     # red
+                (0.0, 1.0, 0.0, 1.0)])    # green
+            bounds = [-1, 0, 1, 2, 3]      # Lower bound inclusive, upper bound non-inclusive
+            handles = [mpatches.Patch(color='red', label='IS'), mpatches.Patch(color='blue', label='GS'),
+                      mpatches.Patch(color='black', label='US'), mpatches.Patch(color='green', label='SAIS')]
+        elif -1 in flags and 2 not in flags:
+            cmap = mpl.colors.ListedColormap([(0.0, 0.0, 0.0, 1.0),     # black
+                                              (1.0, 0.0, 0.0, 1.0),     # blue
+                                              (0.0, 0.0, 1.0, 1.0)])    # red
+            bounds = [-1, 0, 1, 2]      # Lower bound inclusive, upper bound non-inclusive
+            handles = [mpatches.Patch(color='red', label='IS'), mpatches.Patch(color='blue', label='GS'),
+                      mpatches.Patch(color='black', label='US')]
+        else:
+            cmap = mpl.colors.ListedColormap([(1.0, 0.0, 0.0, 1.0),  # blue
+                                              (0.0, 0.0, 1.0, 1.0)])  # red
+            bounds = [0, 1, 2]          # Lower bound inclusive, upper bound non-inclusive
+            handles = [mpatches.Patch(color='red', label='IS'), mpatches.Patch(color='blue', label='GS')]
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        hours = mdates.HourLocator(byhour=range(0, 24, 4))
+        ax.xaxis.set_major_locator(hours)
+        ax.set_xlabel(xlabel)
+        ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
+        ax.set_ylim([0, self.nrang])
+        ax.set_ylabel('Range gate')
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+        ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
+        ax.legend(handles=handles, loc=4)
+        return
 
     def _tight_layout(self):
         #self.fig.tight_layout(rect=[0, 0, 0.9, 0.97])
@@ -298,7 +408,7 @@ class RangeTimePlot(object):
         import matplotlib as mpl
         pos = ax.get_position()
         cpos = [pos.x1 + 0.025, pos.y0 + 0.0125,
-                0.015, pos.height * 0.9]                # this list defines (left, bottom, width, height
+                0.015, pos.height * 0.8]                # this list defines (left, bottom, width, height
         cax = fig.add_axes(cpos)
         norm = mpl.colors.BoundaryNorm(bounds, colormap.N)
         cb2 = mpl.colorbar.ColorbarBase(cax, cmap=colormap,
@@ -312,6 +422,7 @@ class RangeTimePlot(object):
     def _create_colormesh(self, ax, time, gate, flags, mask, bounds, cmap, xlabel='',
                           label_clusters=False):
         # Create a (n times) x (n range gates) array and add flag data
+        flags = flags.astype(int)
         num_times = len(self.unique_times)
         color_mesh = np.zeros((num_times, self.nrang)) * np.nan
         for f in np.unique(flags):
