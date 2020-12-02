@@ -17,6 +17,15 @@ import datetime
 from plots_report import *
 from get_sd_data import *
 from matplotlib.dates import date2num, num2date
+from sma import ScatterTypeDetection
+
+
+def estimate_kappa(l1, l2):
+    from sklearn.metrics import cohen_kappa_score
+    print(len(l1), len(l1[l1==0]), len(l1[l1==1]), len(l1[l1==-1]), len(l2[l2==0]), len(l2[l2==1]), len(l2[l2==-1]))
+    k = cohen_kappa_score(l1.astype(int), l2.astype(int))
+    print(k)
+    return k
 
 def estimate_skills(_dict_, labels):
     V, W, L = [], [], []
@@ -99,7 +108,7 @@ def lower_range(df, gf=None):
 # In[2]:
 
 
-case = 0*1
+case = 3
 
 
 
@@ -109,25 +118,26 @@ if case == 0:
     end_time = datetime.datetime(2017, 4, 5)
     rad, bm = "cvw",7
 
-    #db = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True, run_gmm=False)
-    #setattr(db, "skill", estimate_skills(db.data_dict, db.clust_flg))
+    #start_time = datetime.datetime(2015, 3, 17)
+    #end_time = datetime.datetime(2015, 3, 17, 12)
+    #rad, bm = "bks",13
+
+    db = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=False, run_gmm=False)
+    setattr(db, "skill", estimate_skills(db.data_dict, db.clust_flg))
     dbgmm = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True)
     setattr(dbgmm, "skill", estimate_skills(dbgmm.data_dict, dbgmm.clust_flg))
-    #gbdb = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=True)
-    #setattr(gbdb, "skill", estimate_skills(gbdb.data_dict, gbdb.clust_flg))
-    #gbdbgmm = GridBasedDBSCAN_GMM(start_time, end_time, rad, load_model=False, save_model=True)
-    #setattr(gbdbgmm, "skill", estimate_skills(gbdbgmm.data_dict, gbdbgmm.clust_flg))
+    gbdb = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=True)
+    setattr(gbdb, "skill", estimate_skills(gbdb.data_dict, gbdb.clust_flg))
+    gbdbgmm = GridBasedDBSCAN_GMM(start_time, end_time, rad, load_model=False, save_model=True)
+    setattr(gbdbgmm, "skill", estimate_skills(gbdbgmm.data_dict, gbdbgmm.clust_flg))
 
     rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=7)
-    dx = todf(db.data_dict)
-    #rti.addParamPlot(dx, bm, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label='Velocity [m/s]')
-    #rti.addParamPlot(dx, bm, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label='Power [dB]')
-    #rti.addParamPlot(dx, bm, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label='Spec. Width [m/s]')
-    rti.addCluster(dx, bm, "DBSCAN", label_clusters=True, skill=db.skill)
-    rti.addCluster(todf(dbgmm.data_dict), bm, "DBSCAN + GMM", label_clusters=True, skill=dbgmm.skill)
-    #rti.addCluster(todf(gbdb.data_dict), bm, "GB-DBSCAN", label_clusters=True, skill=gbdb.skill)
-    #rti.addCluster(todf(gbdbgmm.data_dict), bm, "GB-DBSCAN + GMM ", label_clusters=True, xlabel="Time, UT", 
-    #    skill=gbdbgmm.skill)
+    rti.addClusterPlot(db.data_dict, db.clust_flg, bm, "DBSCAN", label_clusters=True, skill=db.skill)
+    rti.addClusterPlot(dbgmm.data_dict, dbgmm.clust_flg, bm, "DBSCAN + GMM", label_clusters=True, skill=dbgmm.skill)
+    rti.addClusterPlot(gbdb.data_dict, gbdb.clust_flg, bm, "GB-DBSCAN", label_clusters=True, skill=gbdb.skill)
+    rti.addClusterPlot(gbdbgmm.data_dict, gbdbgmm.clust_flg, bm, "GB-DBSCAN + GMM ", label_clusters=True, xlabel="Time, UT", 
+        skill=gbdbgmm.skill)
+    #rti.save("figs/rti.example.ii.png")
     rti.save("figs/rti.example.png")
 if case == 1:
     plot_acfs(rad="kap")
@@ -135,6 +145,8 @@ if case == 1:
     plot_lims(True)
     plot_rad_acfs()
     plot_hist_hr()
+    plot_hist_hrw()
+    probabilistic_curve()
 if case == 2:
     start_time = datetime.datetime(2015, 3, 17)
     end_time = datetime.datetime(2015, 3, 17, 12)
@@ -148,86 +160,81 @@ if case == 2:
     rti.save("figs/dbscan.trad.png")
 if case == 3:
     start_time = datetime.datetime(2015, 3, 17)
+    start_time = datetime.datetime(2010, 1, 15)
     end_time = datetime.datetime(2015, 3, 17, 12)
-    rad, bm = "bks",7
-    kinds = ["dbscan", "dbscan-gmm", "gb-dbscan", "gb-dbscan-gmm"]
+    end_time = datetime.datetime(2010, 1, 16)
+    rads, bm, crj = ["bks"],7, 0
+
+    start_time = datetime.datetime(2017, 4, 4)
+    end_time = datetime.datetime(2017, 4, 5)
+    #kinds = ["dbscan", "dbscan-gmm", "gb-dbscan", "gb-dbscan-gmm"]
+    rads, bm, crj = ["cvw"],7, 0
+    #kinds = ["gb-dbscan-gmm"]
     kinds = ["dbscan"]
-    for kind in kinds:    
-        if kind == "dbscan": db = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True, run_gmm=False)
-        if kind == "dbscan-gmm": db = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True, run_gmm=True)
-        if kind == "gb-dbscan": db = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=True)
-        if kind == "gb-dbscan-gmm": db = GridBasedDBSCAN_GMM(start_time, end_time, rad, load_model=False, save_model=True,
+    for rad in rads:
+        for kind in kinds:    
+            if len(kinds) == 1: dbx = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True, run_gmm=False)
+            if kind == "dbscan": db = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True, run_gmm=False)
+            if kind == "dbscan-gmm": db = DBSCAN_GMM(start_time, end_time, rad, BoxCox=True, load_model=False, save_model=True, run_gmm=True)
+            if kind == "gb-dbscan": db = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=True)
+            if kind == "gb-dbscan-gmm": db = GridBasedDBSCAN_GMM(start_time, end_time, rad, load_model=False, save_model=True,
                 features=['beam', 'gate', 'time','vel','wid'], scan_eps=10)
-        sd = ScatterDetection(db.data_dict)
-        #rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=6)
-        #rti.addClusterPlot(db.data_dict, db.clust_flg, bm, kind.upper(), label_clusters=True, skill=None)
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=0), bm, "GS-ID:Median(Sudden)", show_closerange=True, xlabel='')
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=1), bm, "GS-ID:Median(Blanchard 2006)", show_closerange=True, xlabel='')
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=2), bm, "GS-ID:Median(Blanchard 2009)", show_closerange=True, xlabel='')
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=3), bm, "GS-ID:Median(Proposed)", show_closerange=True, xlabel='')
-        #rti.addVelPlot(db.data_dict, bm, "Velocity", vel_max=200, vel_step=50, xlabel='Time UT')
-        #rti.save("figs/%s.median.png"%kind)
+            sd = ScatterDetection(db.data_dict)
+            #rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=6)
+            #rti.addClusterPlot(db.data_dict, db.clust_flg, bm, kind.upper(), label_clusters=True, skill=None)
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=0), bm, "GS-ID:Median(Sudden)", show_closerange=True, xlabel='')
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=1), bm, "GS-ID:Median(Blanchard 2006)", show_closerange=True, xlabel='')
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=2), bm, "GS-ID:Median(Blanchard 2009)", show_closerange=True, xlabel='')
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=3), bm, "GS-ID:Median(Proposed)", show_closerange=True, xlabel='')
+            #rti.addVelPlot(db.data_dict, bm, "Velocity", vel_max=200, vel_step=50, xlabel='Time UT')
+            #rti.save("figs/%s.median.png"%kind)
 
-        #rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=6)
-        #rti.addClusterPlot(db.data_dict, db.clust_flg, bm, kind.upper(), label_clusters=True, skill=None)
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=2, thresh=[0.1,0.9], case=0), bm, "GS-ID:Median(Sudden)", show_closerange=True, xlabel='')
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=2, thresh=[0.1,0.9], case=1), bm, "GS-ID:Median(Blanchard 2006)",
-        #        show_closerange=True, xlabel='')
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=2, thresh=[0.1,0.9], case=2), bm, "GS-ID:Median(Blanchard 2009)", 
-        #        show_closerange=True, xlabel='')
-        #rti.addGSISPlot(db.data_dict, sd.run(kind=2, case=3), bm, "GS-ID:Median(Proposed)", show_closerange=True, xlabel='')
-        #rti.addVelPlot(db.data_dict, bm, "Velocity", vel_max=200, vel_step=50, xlabel='Time UT')
-        #rti.save("figs/%s.kde.png"%kind)
+            #rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=6)
+            #rti.addClusterPlot(db.data_dict, db.clust_flg, bm, kind.upper(), label_clusters=True, skill=None)
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=2, thresh=[0.1,0.9], case=0), bm, "GS-ID:Median(Sudden)", show_closerange=True, xlabel='')
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=2, thresh=[0.1,0.9], case=1), bm, "GS-ID:Median(Blanchard 2006)",
+            #        show_closerange=True, xlabel='')
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=2, thresh=[0.1,0.9], case=2), bm, "GS-ID:Median(Blanchard 2009)", 
+            #        show_closerange=True, xlabel='')
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=2, case=3), bm, "GS-ID:Median(Proposed)", show_closerange=True, xlabel='')
+            #rti.addVelPlot(db.data_dict, bm, "Velocity", vel_max=200, vel_step=50, xlabel='Time UT')
+            #rti.save("figs/%s.kde.png"%kind)
 
-        rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=6)
-        rti.addClusterPlot(db.data_dict, db.clust_flg, bm, kind.upper(), label_clusters=True, skill=None)
-        rti.addGSISPlot(db.data_dict, sd.run(kind=0, case=0), bm, "GS-ID:Sudden", show_closerange=True, xlabel='')
-        rti.addGSISPlot(db.data_dict, sd.run(kind=0, case=1), bm, "GS-ID:Blanchard 2006", show_closerange=True, xlabel='')
-        rti.addGSISPlot(db.data_dict, sd.run(kind=0, case=2), bm, "GS-ID:Blanchard 2009", show_closerange=True, xlabel='')
-        rti.addGSISPlot(db.data_dict, sd.run(kind=0, case=3), bm, "GS-ID:Proposed", show_closerange=True, xlabel='')
-        rti.addVelPlot(db.data_dict, bm, "Velocity", vel_max=200, vel_step=50, xlabel='Time UT')
-        rti.save("figs/%s.indp.png"%kind)
+            rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=5)
+            rti.addGSISPlot(db.data_dict, db.data_dict["trad_gsflg"], bm, "GsI:[Traditional]", show_closerange=True, xlabel='', close_range_black=crj)
+            rti.addClusterPlot(db.data_dict, db.clust_flg, bm, kind.upper(), label_clusters=True, skill=None, close_range_black=crj)
+            rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=0), bm, "GsI:[Sudden]", show_closerange=True, xlabel='', close_range_black=crj)
+            rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=1), bm, "GsI:[Blanchard 2006]", show_closerange=True, xlabel='',close_range_black=crj)
+            rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=2), bm, "GsI:[Blanchard 2009]", show_closerange=True, xlabel='Time, [UT]',close_range_black=crj)
+            #rti.addGSISPlot(db.data_dict, sd.run(kind=1, case=3), bm, "GsI:[Chakraborty]", show_closerange=True, xlabel='',close_range_black=8)
+            #rti.addVelPlot(db.data_dict, bm, "Velocity", vel_max=200, vel_step=50, xlabel='Time UT')
+            rti.save("figs/%s_%s.med.png"%(rad, kind))
+
+            if len(kinds) == 1:
+                rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=4)
+                keys=['gate', 'beam', 'vel', 'wid', 'time', 'trad_gsflg', 'pow', 'clust_flg']
+                df = todf(dbx.data_dict, keys=keys)
+                sdf = ScatterTypeDetection(df)
+                #rti.addParamPlot(df, bm, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label='Velocity [m/s]')
+                #rti.addParamPlot(df, bm, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label='Spec. Width [m/s]')
+                rti.addCluster(df, bm, kind.upper(), label_clusters=True, skill=None)#, close_range_black=crj)
+                rti.addGSIS(sdf.run(kind=0, case=0), bm, "GsI:[Sudden]", xlabel='')#, close_range_black=crj)
+                rti.addGSIS(sdf.run(kind=0, case=2), bm, "GsI:[Blanchard 2009]", xlabel="")#'Time [UT]',close_range_black=crj)
+                rti.addGSIS(sdf.run(kind=0, case=3, mod=False), bm, r"GsI:[Chakraborty]", xlabel='Time, UT')
+                dfx1, dfx2, dfx3 = sdf.run(kind=0, case=0).copy(), sdf.run(kind=0, case=2).copy(), sdf.run(kind=0, case=3, mod=True).copy()
+                dfx1, dfx2, dfx3 = dfx1[dfx1.bmnum==bm], dfx2[dfx2.bmnum==bm], dfx3[dfx3.bmnum==bm]
+                estimate_kappa(np.array(dfx1.gflg), np.array(dfx2.gflg))
+                estimate_kappa(np.array(dfx1.gflg), np.array(dfx3.gflg))
+                estimate_kappa(np.array(dfx2.gflg), np.array(dfx3.gflg))
+                rti.save("figs/%s_%s.med.png"%(rad, kind))
+
+                rti = RangeTimePlot(110, np.unique(np.hstack(db.data_dict["time"])), "", num_subplots=4)
+                rti.addGSIS(sdf.run(kind=0, case=0), bm, "GsI:[Sudden]", xlabel='')
+                rti.addGSIS(sdf.run(kind=11, case=3), bm, r"GsI:[Chakraborty]", xlabel='Time, UT')
+                rti.save("figs/%s_%s.group.png"%(rad, kind))
+
 if case == 4:
     pass
-
-
-# In[ ]:
-
-
-#from sma import MiddleLatFilter
-#start_time = datetime.datetime(2015, 3, 17)
-#end_time = datetime.datetime(2015, 3, 17, 10)
-#rad, bm = "bks",7
-
-#start_time = datetime.datetime(2017, 4, 4)
-#end_time = datetime.datetime(2017, 4, 5)
-#rad, bm = "cvw",7
-
-#fdata = FetchData( rad, [start_time, end_time] )
-#_, scans = fdata.fetch_data(by="scan", scan_prop={"dur": 2, "stype": "themis"})
-#print(" Total numbe of scans: ", len(scans))
-#import pickle
-#data_dict = pickle.load(open("../data/bks_2015-03-17_scans.pickle", 'rb'))
-#data_dict = _filter_by_time(start_time, end_time, data_dict)
-
-#import os
-#os.system("rm figs/bks*")
-#df = sma_bbox(scans, sdur=15, idx=None)
-#from sma import ScatterTypeDetection
-#bm=7
-#sd = ScatterTypeDetection(df)
-#rti = RangeTimePlot(110, np.unique(np.hstack(data_dict["time"])), "", num_subplots=3)
-#rti.addParamPlot(df, bm, "Velocity", vel_max=100, vel_step=20, xlabel="")
-#rti.addCluster(df, bm, "SMA", xlabel="")
-#rti.addGSIS(sd.run(kind=0, case=0), bm, r"GsI:[Sudden]")
-#rti.addGSIS(sd.run(kind=0, case=1), bm, r"GsI:[Blanchard 2006]")
-#rti.addGSIS(sd.run(kind=0, case=2), bm, r"GsI:[Blanchard 2009]", xlabel='Time, UT')
-#rti.addGSIS(sd.run(kind=0, case=3), bm, r"GsI:[X]", xlabel='Time, UT')
-#rti.save("figs/bks_sma_01.png")
-#rti.close()
-
-
-# In[ ]:
 
 
 run = False
@@ -252,12 +259,12 @@ if run:
     rti.addParamPlot(df, bm, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label='Velocity [m/s]')
     rti.addParamPlot(df, bm, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label='Power [dB]')
     rti.addParamPlot(df, bm, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label='Spec. Width [m/s]')
-    rti.addCluster(lower_range(df, -1), bm, "SMA", label_clusters=True, skill=estimate_df_skills(df, df.labels), xlabel='Time, UT')
+    rti.addCluster(lower_range(df, -1), bm, "BSC", label_clusters=True, skill=estimate_df_skills(df, df.labels), xlabel='Time, UT')
     rti.save("figs/cvw_07_sma.png")
     rti.close()
     sd = ScatterTypeDetection(df)
     rti = RangeTimePlot(110, np.unique(np.hstack(data_dict["time"])), "", num_subplots=5)
-    rti.addCluster(lower_range(df, -1), bm, "SMA", label_clusters=True, skill=estimate_df_skills(df, df.labels))
+    rti.addCluster(lower_range(df, -1), bm, "BSC", label_clusters=True, skill=estimate_df_skills(df, df.labels))
     rti.addGSIS(sd.run(kind=1, case=0), bm, r"GsI:[Sudden]")
     rti.addGSIS(sd.run(kind=1, case=1), bm, r"GsI:[Blanchard 2006]")
     rti.addGSIS(sd.run(kind=1, case=2), bm, r"GsI:[Blanchard 2009]")
@@ -275,7 +282,7 @@ if run:
     from sma import MiddleLatFilter
     start_time = datetime.datetime(2015, 3, 17)
     end_time = datetime.datetime(2015, 3, 17, 12)
-    rad, bm = "bks",15
+    rad, bm = "bks",13
 
     fdata = FetchData( rad, [start_time, end_time] )
     _, scans = fdata.fetch_data(by="scan", scan_prop={"dur": 2, "stype": "themis"})
@@ -292,12 +299,12 @@ if run:
     rti.addParamPlot(df, bm, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label='Velocity [m/s]')
     rti.addParamPlot(df, bm, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label='Power [dB]')
     rti.addParamPlot(df, bm, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label='Spec. Width [m/s]')
-    rti.addCluster(lower_range(df, -1), bm, "SMA", label_clusters=True, skill=estimate_df_skills(df, df.labels), xlabel='Time, UT')
+    rti.addCluster(lower_range(df, -1), bm, "BSC", label_clusters=True, skill=estimate_df_skills(df, df.labels), xlabel='Time, UT')
     rti.save("figs/bks_07_sma.png")
     rti.close()
     sd = ScatterTypeDetection(df)
     rti = RangeTimePlot(110, np.unique(np.hstack(data_dict["time"])), "", num_subplots=5)
-    rti.addCluster(lower_range(df, -1), bm, "SMA", label_clusters=True, skill=estimate_df_skills(df, df.labels))
+    rti.addCluster(lower_range(df, -1), bm, "BSC", label_clusters=True, skill=estimate_df_skills(df, df.labels))
     rti.addGSIS(sd.run(kind=1, case=0), bm, r"GsI:[Sudden]")
     rti.addGSIS(sd.run(kind=1, case=1), bm, r"GsI:[Blanchard 2006]")
     rti.addGSIS(sd.run(kind=1, case=2), bm, r"GsI:[Blanchard 2009]")

@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, "..")
 sys.path.insert(0, "../utilities/")
 
-def plot_acfs(rad="kap", fname="figs/"):
+def plot_acfs(rad="kap", fname="figs/acfs.png"):
     w_range, v_range = np.arange(0, 1001, 5), np.arange(0, 1001, 5)
     w, v = np.meshgrid(w_range, v_range) 
     cmap = cm.gray

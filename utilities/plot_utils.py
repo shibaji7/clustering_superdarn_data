@@ -184,7 +184,8 @@ class RangeTimePlot(object):
 
 
 
-    def addClusterPlot(self, data_dict, clust_flg, beam, title, show_closerange=True, xlabel='', label_clusters=False, skill=None):
+    def addClusterPlot(self, data_dict, clust_flg, beam, title, show_closerange=True, xlabel='', label_clusters=False, skill=None,
+            close_range_black=None):
         # add new axis
         self.cluster_ax = self._add_axis()
         # set up variables for plotter
@@ -192,6 +193,7 @@ class RangeTimePlot(object):
         gate = np.hstack(data_dict['gate'])
         allbeam = np.hstack(data_dict['beam'])
         flags = np.hstack(clust_flg)
+        if close_range_black is not None: flags[gate < close_range_black] = -1
         mask = allbeam == beam
         if not show_closerange:
             mask = mask & (gate > 10)
@@ -211,7 +213,7 @@ class RangeTimePlot(object):
                     verticalalignment='center', transform=self.cluster_ax.transAxes)
 
 
-    def addGSISPlot(self, data_dict, gs_flg, beam, title, show_closerange=True, xlabel=''):
+    def addGSISPlot(self, data_dict, gs_flg, beam, title, show_closerange=True, xlabel='', close_range_black=None):
         # add new axis
         self.isgs_ax = self._add_axis()
         # set up variables for plotter
@@ -219,6 +221,7 @@ class RangeTimePlot(object):
         gate = np.hstack(data_dict['gate'])
         allbeam = np.hstack(data_dict['beam'])
         flags = np.hstack(gs_flg)
+        if close_range_black is not None: flags[gate < close_range_black] = -1
         mask = allbeam == beam
         print(set(flags))
         if not show_closerange:
@@ -382,6 +385,7 @@ class RangeTimePlot(object):
         df = df[df.bmnum==beam]
         X, Y, Z = utility.get_gridded_parameters(df, xparam="time", yparam="slist", zparam="gflg",)
         flags = np.array(df.gflg).astype(int)
+        print("GSIS:",len(flags), len(flags[flags==0]), len(flags[flags==1]), len(flags[flags==-1]))
         if -1 in flags and 2 in flags:                     # contains noise flag
             cmap = mpl.colors.ListedColormap([(0.0, 0.0, 0.0, 1.0),     # black
                 (1.0, 0.0, 0.0, 1.0),     # blue
@@ -485,10 +489,18 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
+<<<<<<< HEAD
         ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(mesh_x, mesh_y, masked_colormesh, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+=======
+        ax.set_xlabel(xlabel,  fontdict={"size":12, 'fontweight': 'bold'})
+        ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
+        pcol = ax.pcolor(mesh_x, mesh_y, masked_colormesh, lw=0.0, cmap=cmap, norm=norm)
+        pcol.set_edgecolor('face')
+>>>>>>> 3d928084cfa0acf20ef66c1c72e85ee2b39ac5f8
         if label_clusters:
             num_flags = len(np.unique(flags))
             for f in np.unique(flags):

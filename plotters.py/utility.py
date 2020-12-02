@@ -179,7 +179,11 @@ class ScatterDetection(object):
                     #if w-0.1*(v-0)**2<20: gflg=1.
                     #if w-0.1*(v-0)**2>20 and np.abs(v)+w/4 < 60: gflg=2.
                     #if  np.abs(v)+w/4 > 60: gflg=0.
+<<<<<<< HEAD
                 self.gs_flg[clust_mask] = np.bincount(gflg).argmax()
+=======
+                self.gs_flg[clust_mask] = gflg#max(set(gflg.tolist()), key = gflg.tolist().count)
+>>>>>>> 3d928084cfa0acf20ef66c1c72e85ee2b39ac5f8
         return
 
     def _1D_to_scanxscan(self):
@@ -212,4 +216,8 @@ def get_gridded_parameters(q, xparam="time", yparam="slist", zparam="v"):
 def get_kappa(y1, y2, n1, n2):
     from sklearn.metrics import cohen_kappa_score
     print("%s - %s: "%(n1,n2), cohen_kappa_score(y1, y2))
+<<<<<<< HEAD
     return
+=======
+    return
+>>>>>>> 3d928084cfa0acf20ef66c1c72e85ee2b39ac5f8
