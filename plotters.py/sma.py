@@ -317,6 +317,8 @@ def individal_cluster_stats(cluster, df, fname, title):
     fig.savefig(fname, bbox_inches="tight")
     return
 
+
+
 class MiddleLatFilter(object):
     """ Class to filter middle latitude radars """
 
@@ -652,9 +654,9 @@ class ScatterTypeDetection(object):
                 #if self.case == 3: gflg = (np.abs(w)-0.1*(v-0)**2<10).astype(int)
                 if self.case == 3: 
                     for i, vi, wi in zip(range(len(v)),v,w):
-                        if np.abs(vi)<5: gflg[i] = 1
-                        elif np.abs(vi)>=5 and np.abs(vi)<20: gflg[i] = 2
-                        elif np.abs(vi)>=20: gflg[i] = 0
+                        if np.abs(vi)<10: gflg[i] = 1
+                        elif np.abs(vi)>=15 and np.abs(vi)<50: gflg[i] = 2
+                        elif np.abs(vi)>=50: gflg[i] = 0
                     #gflg = (np.logical_or(np.abs(v)<20., np.abs(w)<30.)).astype(int)
                 self.gs_flg[clust_mask] = gflg
         return
@@ -669,18 +671,27 @@ class ScatterTypeDetection(object):
             if c == -1: self.gs_flg[clust_mask] = -1
             else:
                 v, w = np.mean(vel[clust_mask]), np.mean(wid[clust_mask])
+                v, w = vel[clust_mask], wid[clust_mask]
+                gflg = np.zeros(len(v))
                 if self.case == 0: gflg = (np.abs(v)+w/3 < 30).astype(int)
                 if self.case == 1: gflg = (np.abs(v)+w/4 < 60).astype(int)
                 if self.case == 2: gflg = (np.abs(v)-0.139*w+0.00113*w**2<33.1).astype(int)
+                #if self.case == 3: 
+                #    vl, vu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
+                #    wl, wu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
+                #    v, w = vel[clust_mask], wid[clust_mask]
+                #    v, w = v[(v>vl) & (v<vu)], w[(w>wl) & (w<wu)]
+                #    gflg = -1
+                #    #if ((vu < 10) and (vl > -10.)) and (wu < 25.): gflg = 1
+                #    if np.mean(np.abs(v))<5: gflg=1
+                #    elif np.mean(np.abs(v))>=5 and np.mean(np.abs(v))<20: gflg = 2
+                #    elif np.mean(np.abs(v))>=20: gflg = 0
+                #self.gs_flg[clust_mask] = gflg
                 if self.case == 3: 
-                    vl, vu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
-                    wl, wu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
-                    v, w = vel[clust_mask], wid[clust_mask]
-                    v, w = v[(v>vl) & (v<vu)], w[(w>wl) & (w<wu)]
-                    gflg = -1
-                    #if ((vu < 10) and (vl > -10.)) and (wu < 25.): gflg = 1
-                    if np.mean(np.abs(v))<5: gflg=1
-                    elif np.mean(np.abs(v))>=5 and np.mean(np.abs(v))<20: gflg = 2
-                    elif np.mean(np.abs(v))>=20: gflg = 0
-                self.gs_flg[clust_mask] = gflg
+                    for i, vi, wi in zip(range(len(v)),v,w):
+                        if np.abs(vi)<5: gflg[i] = 1
+                        elif np.abs(vi)>=5 and np.abs(vi)<50: gflg[i] = 2
+                        elif np.abs(vi)>=50: gflg[i] = 0
+                    #gflg = (np.logical_or(np.abs(v)<20., np.abs(w)<30.)).astype(int)
+                self.gs_flg[clust_mask] = max(set(gflg.tolist()), key = gflg.tolist().count) 
         return

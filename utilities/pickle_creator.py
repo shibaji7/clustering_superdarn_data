@@ -97,15 +97,6 @@ def convert_db(date, rad, pickle=True):
         
 
 
-
-""" Get data """
-rad = 'cvw'
-
-dates = [dt.datetime(2017, 4, 4)]#, (2017, 1, 17), (2017, 3, 13), (2017, 4, 4), (2017, 5, 30), (2017, 8, 20),
-         #(2017, 9, 20), (2017, 10, 16), (2017, 11, 14), (2017, 12, 8), (2017, 12, 17),
-         #(2017, 12, 18), (2017, 12, 19), (2018, 1, 25), (2018, 2, 7), (2018, 2, 8),
-         #(2018, 3, 8), (2018, 4, 5)]
-
 def to_db(date, rad):
     fdata = FetchData( rad, [date,
                 date + dt.timedelta(days=1)] )
@@ -158,6 +149,16 @@ def to_db(date, rad):
     pickle.dump(data, open(filename+".pickle", 'wb'))
     return
 
-for date in dates:
-    #convert_db(date, rad)
-    to_db(date, rad)
+
+""" Get data """
+rads = ['cvw']
+
+dates = [dt.datetime(2017, 4, 4)]#, (2017, 1, 17), (2017, 3, 13), (2017, 4, 4), (2017, 5, 30), (2017, 8, 20),
+         #(2017, 9, 20), (2017, 10, 16), (2017, 11, 14), (2017, 12, 8), (2017, 12, 17),
+         #(2017, 12, 18), (2017, 12, 19), (2018, 1, 25), (2018, 2, 7), (2018, 2, 8),
+         #(2018, 3, 8), (2018, 4, 5)]
+            
+for rad in rads:
+    for date in dates:
+        #convert_db(date, rad)
+        to_db(date, rad)

@@ -206,8 +206,7 @@ class RangeTimePlot(object):
                                label_clusters=label_clusters)
         self.cluster_ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
         if skill is not None:
-            txt = r"CH = %.1f, BH = %.1f $\times 10^{6}$"%(skill.chscore, skill.bhscore/1e6) +"\n"+\
-                    "H = %.1f, Xu = %.1f"%(skill.hscore, skill.xuscore)
+            txt = r"H = %.1f, BH = %.1f $\times 10^{6}$"%(skill.hscore, skill.bhscore/1e6)
             self.cluster_ax.text(0.8, 0.8, txt, horizontalalignment='center',
                     verticalalignment='center', transform=self.cluster_ax.transAxes)
 
@@ -275,10 +274,10 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         self._tight_layout()
         self._add_colorbar(self.fig, ax, bounds, cmap, label=label)
@@ -307,15 +306,59 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
         if skill is not None:
-            txt = r"CH = %.1f, BH = %.1f $\times 10^{6}$"%(skill.chscore, skill.bhscore/1e6) +"\n"+\
-                    "H = %.1f, Xu = %.1f"%(skill.hscore, skill.xuscore)
+            txt = r"H = %.1f, BH = %.1f $\times 10^{6}$"%(skill.hscore, skill.bhscore/1e6)
+            ax.text(0.8, 0.8, txt, horizontalalignment='center',
+                    verticalalignment='center', transform=ax.transAxes)
+        if label_clusters:
+            num_flags = len(np.unique(flags))
+            for f in np.unique(flags):
+                flag_mask = Z.T==f
+                g = Y[flag_mask].astype(int)
+                t_c = X[flag_mask]
+                # Only label clusters large enough to be distinguishable on RTI map,
+                # OR label all clusters if there are few
+                if (len(t_c) > 250 or
+                   (num_flags < 50 and len(t_c) > 0)) \
+                   and f != -1:
+                    m = int(len(t_c) / 2)  # Time is sorted, so this is roughly the index of the median time
+                    ax.text(t_c[m], g[m], str(int(f)), fontdict={'size': 8, 'fontweight': 'bold'})  # Label cluster #
+        return
+    
+    
+    def addClusterBase(self, df, beam, title, xlabel='', label_clusters=True, skill=None):
+        # add new axis
+        ax = self._add_axis()
+        df = df[df.bmnum==beam]
+        unique_labs = np.sort(np.unique(df.labels))
+        X, Y, Z = utility.get_gridded_parameters(df, xparam="time", yparam="slist", zparam="labels")
+        flags = df.labels
+        print(len(np.unique(flags)))
+        if -1 in flags:
+            cmap = get_cluster_cmap(len(np.unique(flags)), plot_noise=True)       # black for noise
+        else:
+            cmap = get_cluster_cmap(len(np.unique(flags)), plot_noise=False)
+
+        # Lower bound for cmap is inclusive, upper bound is non-inclusive
+        bounds = list(range( len(np.unique(flags))+2 ))    # need (max_cluster+1) to be the upper bound
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        hours = mdates.HourLocator(byhour=range(0, 24, 4))
+        ax.xaxis.set_major_locator(hours)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
+        ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
+        ax.set_ylim([0, self.nrang])
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+        ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
+        if skill is not None:
+            txt = r"H = %.1f, BH = %.1f $\times 10^{6}$"%(skill.hscore, skill.bhscore/1e6)
             ax.text(0.8, 0.8, txt, horizontalalignment='center',
                     verticalalignment='center', transform=ax.transAxes)
         if label_clusters:
@@ -363,10 +406,10 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
         ax.legend(handles=handles, loc=4)
@@ -393,6 +436,7 @@ class RangeTimePlot(object):
     def _add_axis(self):
         self._num_subplots_created += 1
         ax = self.fig.add_subplot(self.num_subplots, 1, self._num_subplots_created)
+        ax.tick_params(axis='both', labelsize=12)
         return ax
 
     def _add_colorbar(self, fig, ax, bounds, colormap, label=''):
@@ -441,9 +485,9 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(mesh_x, mesh_y, masked_colormesh, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         if label_clusters:
             num_flags = len(np.unique(flags))

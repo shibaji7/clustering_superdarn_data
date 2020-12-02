@@ -275,7 +275,7 @@ class FetchData(object):
         return _b, _s
 
     def convert_to_pandas(self, beams, s_params=["bmnum", "noise.sky", "tfreq", "scan", "nrang", "time"],
-            v_params=["pwr0", "v", "w_l", "gflg", "p_l", "slist", "v_e", "elv"]):
+            v_params=["v", "w_l", "gflg", "p_l", "slist"]):
         """
         Convert the beam data into dataframe
         """
