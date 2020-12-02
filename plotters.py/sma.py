@@ -604,8 +604,9 @@ class ScatterTypeDetection(object):
         self.case = case
         if self.kind == 0: self.indp()
         if self.kind == 1: self.group()
+        if self.kind == 11: self.new_group()
         if self.kind == 2: self.kde()
-        if mod: self.gs_flg[self.gs_flg==2] = 1
+        if mod: self.gs_flg[self.gs_flg==2] = 0
         self.df["gflg"] = self.gs_flg
         return self.df
 
@@ -652,11 +653,37 @@ class ScatterTypeDetection(object):
                 #if self.case == 3: gflg = (np.abs(w)-0.1*(v-0)**2<10).astype(int)
                 if self.case == 3: 
                     for i, vi, wi in zip(range(len(v)),v,w):
-                        if np.abs(vi)<5: gflg[i] = 1
-                        elif np.abs(vi)>=5 and np.abs(vi)<20: gflg[i] = 2
-                        elif np.abs(vi)>=20: gflg[i] = 0
-                    #gflg = (np.logical_or(np.abs(v)<20., np.abs(w)<30.)).astype(int)
+                        if np.abs(vi)<10: gflg[i] = 1
+                        elif np.abs(vi)>=15 and np.abs(vi)<50: gflg[i] = 2
+                        elif np.abs(vi)>=50: gflg[i] = 0
                 self.gs_flg[clust_mask] = gflg
+        return
+
+    def new_group(self):
+        print("here", self.kind, self.case)
+        vel = np.hstack(self.df["v"])
+        wid = np.hstack(self.df["w_l"])
+        beams = np.hstack(self.df["bmnum"])
+        clust_flg_1d = np.hstack(self.df["labels"])
+        self.gs_flg = np.zeros(len(clust_flg_1d))
+        for c in np.unique(clust_flg_1d):
+            for bm in np.unique(beams):
+                clust_mask = c == clust_flg_1d
+                if c == -1: self.gs_flg[clust_mask] = -1
+                else:
+                    v, w = np.mean(vel[clust_mask]), np.mean(wid[clust_mask])
+                    v, w = vel[clust_mask], wid[clust_mask]
+                    gflg = np.zeros(len(v))
+                    if self.case == 0: gflg = (np.abs(v)+w/3 < 30).astype(int)
+                    if self.case == 1: gflg = (np.abs(v)+w/4 < 60).astype(int)
+                    if self.case == 2: gflg = (np.abs(v)-0.139*w+0.00113*w**2<33.1).astype(int)
+                    if self.case == 3: 
+                        for i, vi, wi in zip(range(len(v)),v,w):
+                            if np.abs(vi)<10: gflg[i] = 1
+                            elif np.abs(vi)>=15 and np.abs(vi)<50: gflg[i] = 2
+                            elif np.abs(vi)>=50: gflg[i] = 0
+                        #gflg = (np.logical_or(np.abs(v)<20., np.abs(w)<30.)).astype(int)
+                    self.gs_flg[clust_mask] = max(set(gflg.tolist()), key = gflg.tolist().count)
         return
 
     def group(self, type="median"):
@@ -669,18 +696,27 @@ class ScatterTypeDetection(object):
             if c == -1: self.gs_flg[clust_mask] = -1
             else:
                 v, w = np.mean(vel[clust_mask]), np.mean(wid[clust_mask])
+                v, w = vel[clust_mask], wid[clust_mask]
+                gflg = np.zeros(len(v))
                 if self.case == 0: gflg = (np.abs(v)+w/3 < 30).astype(int)
                 if self.case == 1: gflg = (np.abs(v)+w/4 < 60).astype(int)
                 if self.case == 2: gflg = (np.abs(v)-0.139*w+0.00113*w**2<33.1).astype(int)
+                #if self.case == 3: 
+                #    vl, vu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
+                #    wl, wu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
+                #    v, w = vel[clust_mask], wid[clust_mask]
+                #    v, w = v[(v>vl) & (v<vu)], w[(w>wl) & (w<wu)]
+                #    gflg = -1
+                #    #if ((vu < 10) and (vl > -10.)) and (wu < 25.): gflg = 1
+                #    if np.mean(np.abs(v))<5: gflg=1
+                #    elif np.mean(np.abs(v))>=5 and np.mean(np.abs(v))<20: gflg = 2
+                #    elif np.mean(np.abs(v))>=20: gflg = 0
+                #self.gs_flg[clust_mask] = gflg#max(set(gflg.tolist()), key = gflg.tolist().count)
                 if self.case == 3: 
-                    vl, vu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
-                    wl, wu = np.quantile(vel[clust_mask],0.25), np.quantile(vel[clust_mask],0.75)
-                    v, w = vel[clust_mask], wid[clust_mask]
-                    v, w = v[(v>vl) & (v<vu)], w[(w>wl) & (w<wu)]
-                    gflg = -1
-                    #if ((vu < 10) and (vl > -10.)) and (wu < 25.): gflg = 1
-                    if np.mean(np.abs(v))<5: gflg=1
-                    elif np.mean(np.abs(v))>=5 and np.mean(np.abs(v))<20: gflg = 2
-                    elif np.mean(np.abs(v))>=20: gflg = 0
-                self.gs_flg[clust_mask] = gflg
+                    for i, vi, wi in zip(range(len(v)),v,w):
+                        if np.abs(vi)<5: gflg[i] = 1
+                        elif np.abs(vi)>=5 and np.abs(vi)<50: gflg[i] = 2
+                        elif np.abs(vi)>=50: gflg[i] = 0
+                    #gflg = (np.logical_or(np.abs(v)<20., np.abs(w)<30.)).astype(int)
+                self.gs_flg[clust_mask] = max(set(gflg.tolist()), key = gflg.tolist().count)
         return

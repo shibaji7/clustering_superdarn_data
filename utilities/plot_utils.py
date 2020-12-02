@@ -184,7 +184,8 @@ class RangeTimePlot(object):
 
 
 
-    def addClusterPlot(self, data_dict, clust_flg, beam, title, show_closerange=True, xlabel='', label_clusters=False, skill=None):
+    def addClusterPlot(self, data_dict, clust_flg, beam, title, show_closerange=True, xlabel='', label_clusters=False, skill=None,
+            close_range_black=None):
         # add new axis
         self.cluster_ax = self._add_axis()
         # set up variables for plotter
@@ -192,6 +193,7 @@ class RangeTimePlot(object):
         gate = np.hstack(data_dict['gate'])
         allbeam = np.hstack(data_dict['beam'])
         flags = np.hstack(clust_flg)
+        if close_range_black is not None: flags[gate < close_range_black] = -1
         mask = allbeam == beam
         if not show_closerange:
             mask = mask & (gate > 10)
@@ -206,13 +208,12 @@ class RangeTimePlot(object):
                                label_clusters=label_clusters)
         self.cluster_ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
         if skill is not None:
-            txt = r"CH = %.1f, BH = %.1f $\times 10^{6}$"%(skill.chscore, skill.bhscore/1e6) +"\n"+\
-                    "H = %.1f, Xu = %.1f"%(skill.hscore, skill.xuscore)
+            txt = r"H = %.1f, BH = %.1f $\times 10^{6}$"%(skill.hscore, skill.bhscore/1e6)
             self.cluster_ax.text(0.8, 0.8, txt, horizontalalignment='center',
                     verticalalignment='center', transform=self.cluster_ax.transAxes)
 
 
-    def addGSISPlot(self, data_dict, gs_flg, beam, title, show_closerange=True, xlabel=''):
+    def addGSISPlot(self, data_dict, gs_flg, beam, title, show_closerange=True, xlabel='', close_range_black=None):
         # add new axis
         self.isgs_ax = self._add_axis()
         # set up variables for plotter
@@ -220,6 +221,7 @@ class RangeTimePlot(object):
         gate = np.hstack(data_dict['gate'])
         allbeam = np.hstack(data_dict['beam'])
         flags = np.hstack(gs_flg)
+        if close_range_black is not None: flags[gate < close_range_black] = -1
         mask = allbeam == beam
         print(set(flags))
         if not show_closerange:
@@ -275,10 +277,10 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         self._tight_layout()
         self._add_colorbar(self.fig, ax, bounds, cmap, label=label)
@@ -307,10 +309,10 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
         if skill is not None:
@@ -339,6 +341,7 @@ class RangeTimePlot(object):
         df = df[df.bmnum==beam]
         X, Y, Z = utility.get_gridded_parameters(df, xparam="time", yparam="slist", zparam="gflg",)
         flags = np.array(df.gflg).astype(int)
+        print("GSIS:",len(flags), len(flags[flags==0]), len(flags[flags==1]), len(flags[flags==-1]))
         if -1 in flags and 2 in flags:                     # contains noise flag
             cmap = mpl.colors.ListedColormap([(0.0, 0.0, 0.0, 1.0),     # black
                 (1.0, 0.0, 0.0, 1.0),     # blue
@@ -363,10 +366,10 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate')
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
         ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
         ax.legend(handles=handles, loc=4)
@@ -393,6 +396,7 @@ class RangeTimePlot(object):
     def _add_axis(self):
         self._num_subplots_created += 1
         ax = self.fig.add_subplot(self.num_subplots, 1, self._num_subplots_created)
+        ax.tick_params(axis='both', labelsize=12)
         return ax
 
     def _add_colorbar(self, fig, ax, bounds, colormap, label=''):
@@ -441,10 +445,11 @@ class RangeTimePlot(object):
         ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel,  fontdict={"size":12, 'fontweight': 'bold'})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
-        ax.set_ylabel('Range gate')
-        ax.pcolormesh(mesh_x, mesh_y, masked_colormesh, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
+        pcol = ax.pcolor(mesh_x, mesh_y, masked_colormesh, lw=0.0, cmap=cmap, norm=norm)
+        pcol.set_edgecolor('face')
         if label_clusters:
             num_flags = len(np.unique(flags))
             for f in np.unique(flags):
