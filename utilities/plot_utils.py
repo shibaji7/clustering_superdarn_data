@@ -7,6 +7,8 @@ from matplotlib import patches
 import matplotlib.patches as mpatches
 import random
 
+import sys
+sys.path.append("../plotters.py/")
 import utility
 
 class MultiDayPlotter:

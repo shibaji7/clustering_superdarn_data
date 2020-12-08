@@ -590,6 +590,115 @@ class MiddleLatFilter(object):
             j += 1
         return
     
+    
+class TimeFilter(object):
+    """ Class to time filter middle latitude radars """
+    
+    def __init__(self, df, beam=7, tw=15, eps=2, min_samples=10):
+        self.df = df[df.bmnum==beam]
+        self.tw = tw
+        self.eps = eps
+        self.min_samples = min_samples
+        self.boundaries = {}
+        return
+    
+    def run_codes(self):
+        start = self.df.time.tolist()[0]
+        end = start + dt.timedelta(minutes=self.tw)
+        k, j = 0, 0
+        labels = []
+        time_index = []
+        while start <= self.df.time.tolist()[-1]:
+            u = self.df[(self.df.time>=start) & (self.df.time<=end)]
+            ds = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(u[["slist"]].values)
+            labs = ds.labels_
+            labs[labs>=0] = labs[labs>=0] + k
+            labels.extend(labs.tolist())
+            start = end
+            end = start + dt.timedelta(minutes=self.tw)
+            k += len(set(labs[labs>=0]))
+            time_index.extend([j]*len(labs))
+            j += 1
+        self.df["gate_labels"] = labels
+        self.df["labels"] = labels#[-1]*len(self.df)
+        self.df["time_index"] = time_index
+        
+        K = len(self.df)
+        for ti in np.unique(time_index):
+            u = self.df[self.df.time_index==ti]
+            self.boundaries[ti] = []
+            for ix in np.unique(u.gate_labels):
+                du = u[u.gate_labels==ix]
+                if ix >= 0 and len(du)/len(u) > 0.5:
+                    self.boundaries[ti].append({"peak": du.slist.mean(), "ub": du.slist.max(), "lb": du.slist.min(),
+                                                "value":len(du)/len(u), "time_index": ti, "gc": ix})
+            print(ti, np.unique(u.gate_labels), len(self.boundaries[ti]))
+        
+        self.ltime, self.utime = np.min(time_index), np.max(time_index)
+        self.gc = []
+        for ti in np.unique(time_index):
+            clust = self.boundaries[ti]
+            for cl in clust:
+                self.gc.append(cl)
+        print(len(self.gc))
+        #for cx in np.unique(self.df["gate_labels"]):
+        #    if cx >= 0:
+        #        u = self.df[(self.df.gate_labels==cx)]
+        #        self.gc.append({"peak": u.slist.mean(), "ub": u.slist.max(), "lb": u.slist.min(), "value":len(u)/K,
+        #                       "time_index": u.time_index.tolist()[0]})
+        self.sma_bgspace()
+        return
+    
+    def sma_bgspace(self):
+        """
+        Simple minded algorithm in B.G space
+        """
+        def range_comp(x, y, pcnt=0.7):
+            _cx = False
+            insc = set(x).intersection(y)
+            if len(x) < len(y) and len(insc) >= len(x)*pcnt: _cx = True
+            if len(x) > len(y) and len(insc) >= len(y)*pcnt: _cx = True
+            return _cx
+        def find_adjucent(lst, mxx):
+            mxl = []
+            for l in lst:
+                if l["peak"] >= mxx["lb"] and l["peak"] <= mxx["ub"]: mxl.append(l)
+                elif mxx["peak"] >= l["lb"] and mxx["peak"] <= l["ub"]: mxl.append(l)
+                elif range_comp(range(l["lb"], l["ub"]+1), range(mxx["lb"], mxx["ub"]+1)): mxl.append(l)
+            return mxl
+        def nested_cluster_find(ti, mx, j, case=-1):
+            if ti < self.ltime and ti > self.utime: return
+            else:
+                if (case == -1 and ti >= self.ltime) or (case == 1 and ti <= self.utime):
+                    mxl = find_adjucent(self.boundaries[ti], mx)
+                    for m in mxl:
+                        if m in self.gc:
+                            del self.gc[self.gc.index(m)]
+                            self.clusters[j].append(m)
+                            nested_cluster_find(m["time_index"] + case, m, j, case)
+                            nested_cluster_find(m["time_index"] + (-1*case), m, j, (-1*case))
+                return
+        self.clusters = {}
+        j = 0
+        while len(self.gc) > 0:
+            self.clusters[j] = []
+            mx = max(self.gc, key=lambda x:x["value"])
+            self.clusters[j].append(mx)
+            if mx in self.gc: del self.gc[self.gc.index(mx)]
+            nested_cluster_find(mx["time_index"] - 1, mx, j, case=-1)
+            nested_cluster_find(mx["time_index"] + 1, mx, j, case=1)
+            j += 1
+        
+        for c in self.clusters.keys():
+            clust = self.clusters[c]
+            for cl in clust:
+                print(c, cl)
+                self.df["labels"] = np.where((self.df.slist<=cl["ub"]) & (self.df.slist>=cl["lb"]) & 
+                                             (self.df.time_index==cl["time_index"]) & (self.df.gate_labels==cl["gc"])
+                                             , c, self.df["labels"])
+        print(set(self.df["labels"]), self.clusters.keys())
+        return
+    
 class ScatterTypeDetection(object):
     """ Detecting scatter type """
 
