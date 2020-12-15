@@ -9,8 +9,10 @@ from get_sd_data import *
 def to_db(date, rad):
     fdata = FetchData( rad, [date,
                 date + dt.timedelta(days=1)] )
-    _, scans = fdata.fetch_data(by="scan", scan_prop={"dur": 2, "stype": "themis"})
+    _, scans = fdata.fetch_data(by="scan")
     #recs = fdata.convert_to_pandas(_beams_)
+    print(" Beams per scan:", len(scans[int(len(scans)/2)].beams))
+    print(" Total scans:", len(scans))
 
     gate_scans = []
     beam_scans = []

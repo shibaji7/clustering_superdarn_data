@@ -36,25 +36,25 @@ def estimate_df_skills(df, skill_file, save):
             f.write(str(sk.chscore)+","+str(sk.bhscore)+","+str(sk.hscore)+","+str(sk.xuscore)+"\n")
     return sk
 
-def save_tags_stats(clusters, df, rad, a_name, dn, save_params):
+def save_tags_stats(clusters, df, rad, a_name, dn):
     dat = []
-    for k in clusters.keys():
-        for u in clusters[k].keys():
-            x = clusters[k][u]
-            x["idx"] = "%d_%d"%(k,u)
-            dat.append(x)
+    for case in clusters.keys():
+        for bm in clusters[case].keys():
+            for cls in clusters[case][bm].keys():
+                x = clusters[case][bm][cls]
+                x["idx"] = "%d_%d_%d"%(case,bm,cls)
+                dat.append(x)
     d = pd.DataFrame.from_records(dat)
     eff_file = "../outputs/efficiency/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
     d.to_csv(eff_file, index=False, header=True)
     clust_file = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
-    df[save_params].to_csv(clust_file, index=False, header=True)
+    df.to_csv(clust_file, index=False, header=True)
     return
 
 def run_algorithm(rad, start, end, a_name="dbscan", gmm=False, 
                   parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "elv", "pow", "clust_flg"],
-                  isgs={"case":0, "thresh":[1./3.,2./3.], "pth":0.5}, plot_beams=[7], 
-                  plot_params=["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"], save=True, 
-                  save_params=["slist", "bmnum", "v", "w_l", "time", "p_l", "labels", "gflg_0", "gflg_1"]):
+                  isgs={"thresh":[0.5,0.5], "pth":0.5}, plot_beams=[7], 
+                  plot_params=["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"], save=True):
     
     if a_name=="dbscan": algo = DBSCAN_GMM(start, end, rad, BoxCox=True, load_model=False, save_model=False, run_gmm=gmm)
     if a_name=="gb-dbscan" and np.logical_not(gmm): algo = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=False)
@@ -64,7 +64,7 @@ def run_algorithm(rad, start, end, a_name="dbscan", gmm=False,
     skill_file = "../outputs/skills/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=start.strftime("%Y%m%d"))
     skills = estimate_df_skills(df, skill_file, save)
     std = ScatterTypeDetection(df.copy())
-    df, clusters = std.run(case=isgs["case"], thresh=isgs["thresh"], pth=isgs["pth"])
+    df, clusters = std.run(thresh=isgs["thresh"], pth=isgs["pth"])
     for beam in plot_beams:
         fig_title = "Rad:{rad}, Model:{a_name}, Beam:{bm}, Date:{dn} UT".format(rad=rad, a_name=a_name, bm="%02d"%beam,
                                                                                 dn=start.strftime("%Y-%m-%d"))
@@ -76,11 +76,11 @@ def run_algorithm(rad, start, end, a_name="dbscan", gmm=False,
         rti.addParamPlot(df, beam, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label="Power [dB]")
         rti.addParamPlot(df, beam, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label="Spec. Width [m/s]")
         rti.addCluster(df, beam, a_name, label_clusters=True, skill=skills, xlabel="")
-        rti.addGSIS(df, beam, GS_CASES[isgs["case"]], xlabel="", zparam="gflg_0")
-        rti.addGSIS(df, beam, GS_CASES[isgs["case"]], xlabel="Time, UT", zparam="gflg_1", clusters=clusters, label_clusters=True)
+        rti.addGSIS(df, beam, GS_CASES[0], xlabel="", zparam="gflg_0_0")
+        rti.addGSIS(df, beam, GS_CASES[0], xlabel="Time, UT", zparam="gflg_0_1", clusters=clusters[0], label_clusters=True)
         rti.save(fname)
         rti.close()
         pass
-    if save: save_tags_stats(clusters, df, rad, a_name, start, save_params)
+    if save: save_tags_stats(clusters, df, rad, a_name, start)
     os.system("rm ../data/{rad}_{dn}_scans_db.csv".format(rad=rad, dn=start.strftime("%Y-%m-%d")))
     return

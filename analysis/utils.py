@@ -105,11 +105,11 @@ class Skills(object):
         n_clusters = len(set(self.labels))
         return np.log(n_clusters) + self.X.shape[1] * np.log2(np.sqrt(self.sse/(self.X.shape[1]*self.X.shape[0]**2)))
 
-    def get_kappa(self, y1, y2):
-        k = cohen_kappa_score(y1, y2)
-        print("Kappa:", cohen_kappa_score(y1, y2))
-        return k
-    
+def get_kappa(y1, y2):
+    k = cohen_kappa_score(y1, y2)
+    print("Kappa:", cohen_kappa_score(y1, y2))
+    return k
+
 def get_gridded_parameters(q, xparam="time", yparam="slist", zparam="v"):
     """
     Method converts scans to "beam" and "slist" or gate
@@ -136,19 +136,21 @@ class ScatterTypeDetection(object):
         self.df = df.fillna(0)
         return
 
-    def run(self, case=0, thresh=[1./3.,2./3.], pth=0.5):
+    def run(self, cases=[0,1,2], thresh=[1./3.,2./3.], pth=0.5):
         self.pth = pth
         self.thresh = thresh
-        self.case = case
         self.clusters = {}
-        for kind in range(2):
-            if kind == 0: 
-                self.indp()
-                self.df["gflg_%d"%kind] = self.gs_flg
-            if kind == 1: 
-                self.kde()
-                self.df["gflg_%d"%kind] = self.gs_flg
-                self.df["proba"] = self.proba
+        for cs in cases:
+            self.case = cs
+            self.clusters[self.case] = {}
+            for kind in range(2):
+                if kind == 0: 
+                    self.indp()
+                    self.df["gflg_%d_%d"%(cs,kind)] = self.gs_flg
+                if kind == 1: 
+                    self.kde()
+                    self.df["gflg_%d_%d"%(cs,kind)] = self.gs_flg
+                    self.df["proba_%d"%(cs)] = self.proba
         return self.df.copy(), self.clusters
 
     def kde(self):
@@ -162,7 +164,7 @@ class ScatterTypeDetection(object):
         self.proba = np.zeros(len(clust_flg_1d))
         beams = np.hstack(self.df["bmnum"])
         for bm in np.unique(beams):
-            self.clusters[bm] = {}
+            self.clusters[self.case][bm] = {}
             for c in np.unique(clust_flg_1d):
                 clust_mask = np.logical_and(c == clust_flg_1d, bm == beams) 
                 if c == -1: self.gs_flg[clust_mask] = -1
@@ -187,7 +189,7 @@ class ScatterTypeDetection(object):
                     else: gflg, ty = -1, "US"
                     self.gs_flg[clust_mask] = gflg
                     self.proba[clust_mask] = f
-                    self.clusters[bm][c] = {"auc": auc, "type": ty}
+                    self.clusters[self.case][bm][c] = {"auc": auc, "type": ty}
         return
 
     def indp(self):
