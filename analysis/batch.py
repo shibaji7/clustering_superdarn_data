@@ -40,6 +40,7 @@ def run_algorithm():
             dn = dn + dt.timedelta(days=1)
     for date in dates:
         for rad in rads:
+            print("Batch mode date, rad: %s, %s"%(dn.strftime("%Y-%m-%d"), rad))
             run_algorithm(rad, date, date+dt.timedelta(days=1), a_name, gmm=gmm, 
                           parameters = parameters, isgs=isgs, plot_beams=plot_beams, 
                           plot_params=plot_params, save=save)
