@@ -4,8 +4,9 @@ rads = ["bks"]
 dates = [dt.datetime(2010, 1, 15)]
 
 parameters = ['gate', 'beam', 'vel', 'wid', 'time', 'trad_gsflg', 'pow', 'clust_flg']
-isgs={"case":0, "thresh":[1./3.,2./3.], "pth":0.5}
+isgs={"case":0, "kind":0, "thresh":[0.5,0.5], "pth":0.5}
 plot_params=["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"]
+save_params=["slist", "bmnum", "v", "w_l", "time", "p_l", "labels", "gflg_0", "gflg_1"]
 plot_beams=[7]
 save = True
 
@@ -23,7 +24,7 @@ def run_gmm_algorithm():
         for rad in rads:
             run_algorithm(rad, date, date+dt.timedelta(days=1), a_name, gmm=False, 
               parameters = parameters, isgs=isgs, plot_beams=plot_beams, 
-              plot_params=plot_params, save=save)
+              plot_params=plot_params, save=save, save_params=save_params)
     return
 
 if __name__ == "__main__":

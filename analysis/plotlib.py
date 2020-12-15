@@ -24,7 +24,7 @@ def get_cluster_cmap(n_clusters, plot_noise=False):
     cmaplist = cmaplist[r]
     if plot_noise:
         cmaplist[0] = (0, 0, 0, 1.0)    # black for noise
-    rand_cmap = cmap.from_list('Cluster cmap', cmaplist, len(cmaplist))
+    rand_cmap = cmap.from_list("Cluster cmap", cmaplist, len(cmaplist))
     return rand_cmap
 
 
@@ -39,32 +39,32 @@ class RangeTimePlot(object):
         self.num_subplots = num_subplots
         self._num_subplots_created = 0
         self.fig = plt.figure(figsize=(8, 3*num_subplots), dpi=100) # Size for website
-        plt.suptitle(fig_title, x=0.075, y=0.95, ha='left', fontweight='bold', fontsize=15)
-        mpl.rcParams.update({'font.size': 10})
+        plt.suptitle(fig_title, x=0.075, y=0.95, ha="left", fontweight="bold", fontsize=15)
+        mpl.rcParams.update({"font.size": 10})
         
-    def addParamPlot(self, df, beam, title, p_max=100, p_min=-100, p_step=25, xlabel='Time UT', zparam="v",
-                    label='Velocity [m/s]'):
+    def addParamPlot(self, df, beam, title, p_max=100, p_min=-100, p_step=25, xlabel="Time UT", zparam="v",
+                    label="Velocity [m/s]"):
         ax = self._add_axis()
         df = df[df.bmnum==beam]
         X, Y, Z = utils.get_gridded_parameters(df, xparam="time", yparam="slist", zparam=zparam)
         bounds = list(range(p_min, p_max+1, p_step))
         cmap = plt.cm.jet
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-        # cmap.set_bad('w', alpha=0.0)
+        # cmap.set_bad("w", alpha=0.0)
         # Configure axes
-        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        ax.xaxis.set_major_formatter(DateFormatter("%H:%M"))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
+        ax.set_xlabel(xlabel, fontdict={"size":12, "fontweight": "bold"})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
-        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
+        ax.set_ylabel("Range gate", fontdict={"size":12, "fontweight": "bold"})
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors="None", cmap=cmap, norm=norm)
         self._add_colorbar(self.fig, ax, bounds, cmap, label=label)
-        ax.set_title(title, loc='left', fontdict={'fontweight': 'bold'})
+        ax.set_title(title, loc="left", fontdict={"fontweight": "bold"})
         return
     
-    def addCluster(self, df, beam, title, xlabel='', label_clusters=True, skill=None):
+    def addCluster(self, df, beam, title, xlabel="", label_clusters=True, skill=None):
         # add new axis
         ax = self._add_axis()
         df = df[df.bmnum==beam]
@@ -82,20 +82,20 @@ class RangeTimePlot(object):
         # Lower bound for cmap is inclusive, upper bound is non-inclusive
         bounds = list(range( len(np.unique(flags))+2 ))    # need (max_cluster+1) to be the upper bound
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        ax.xaxis.set_major_formatter(DateFormatter("%H:%M"))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
+        ax.set_xlabel(xlabel, fontdict={"size":12, "fontweight": "bold"})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
-        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
-        ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
+        ax.set_ylabel("Range gate", fontdict={"size":12, "fontweight": "bold"})
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors="None", cmap=cmap, norm=norm)
+        ax.set_title(title,  loc="left", fontdict={"fontweight": "bold"})
         if skill is not None:
             txt = r"CH = %.1f, BH = %.1f $\times 10^{6}$"%(skill.chscore, skill.bhscore/1e6) +"\n"+\
                     "H = %.1f, Xu = %.1f"%(skill.hscore, skill.xuscore)
-            ax.text(0.8, 0.8, txt, horizontalalignment='center',
-                    verticalalignment='center', transform=ax.transAxes)
+            ax.text(0.8, 0.8, txt, horizontalalignment="center",
+                    verticalalignment="center", transform=ax.transAxes)
         if label_clusters:
             num_flags = len(np.unique(flags))
             for f in np.unique(flags):
@@ -108,10 +108,10 @@ class RangeTimePlot(object):
                    (num_flags < 50 and len(t_c) > 0)) \
                    and f != -1:
                     m = int(len(t_c) / 2)  # Time is sorted, so this is roughly the index of the median time
-                    ax.text(t_c[m], g[m], str(int(f)), fontdict={'size': 8, 'fontweight': 'bold'})  # Label cluster #
+                    ax.text(t_c[m], g[m], str(int(f)), fontdict={"size": 8, "fontweight": "bold"})  # Label cluster #
         return
     
-    def addGSIS(self, df, beam, title, xlabel='', zparam="gflg_0", clusters=None, label_clusters=False):
+    def addGSIS(self, df, beam, title, xlabel="", zparam="gflg_0", clusters=None, label_clusters=False):
         # add new axis
         ax = self._add_axis()
         df = df[df.bmnum==beam]
@@ -123,30 +123,30 @@ class RangeTimePlot(object):
                 (0.0, 0.0, 1.0, 1.0),     # red
                 (0.0, 1.0, 0.0, 1.0)])    # green
             bounds = [-1, 0, 1, 2, 3]      # Lower bound inclusive, upper bound non-inclusive
-            handles = [mpatches.Patch(color='red', label='IS'), mpatches.Patch(color='blue', label='GS'),
-                      mpatches.Patch(color='black', label='US'), mpatches.Patch(color='green', label='SAIS')]
+            handles = [mpatches.Patch(color="red", label="IS"), mpatches.Patch(color="blue", label="GS"),
+                      mpatches.Patch(color="black", label="US"), mpatches.Patch(color="green", label="SAIS")]
         elif -1 in flags and 2 not in flags:
             cmap = mpl.colors.ListedColormap([(0.0, 0.0, 0.0, 1.0),     # black
                                               (1.0, 0.0, 0.0, 1.0),     # blue
                                               (0.0, 0.0, 1.0, 1.0)])    # red
             bounds = [-1, 0, 1, 2]      # Lower bound inclusive, upper bound non-inclusive
-            handles = [mpatches.Patch(color='red', label='IS'), mpatches.Patch(color='blue', label='GS'),
-                      mpatches.Patch(color='black', label='US')]
+            handles = [mpatches.Patch(color="red", label="IS"), mpatches.Patch(color="blue", label="GS"),
+                      mpatches.Patch(color="black", label="US")]
         else:
             cmap = mpl.colors.ListedColormap([(1.0, 0.0, 0.0, 1.0),  # blue
                                               (0.0, 0.0, 1.0, 1.0)])  # red
             bounds = [0, 1, 2]          # Lower bound inclusive, upper bound non-inclusive
-            handles = [mpatches.Patch(color='red', label='IS'), mpatches.Patch(color='blue', label='GS')]
+            handles = [mpatches.Patch(color="red", label="IS"), mpatches.Patch(color="blue", label="GS")]
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-        ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+        ax.xaxis.set_major_formatter(DateFormatter("%H:%M"))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
         ax.xaxis.set_major_locator(hours)
-        ax.set_xlabel(xlabel, fontdict={"size":12, 'fontweight': 'bold'})
+        ax.set_xlabel(xlabel, fontdict={"size":12, "fontweight": "bold"})
         ax.set_xlim([self.unique_times[0], self.unique_times[-1]])
         ax.set_ylim([0, self.nrang])
-        ax.set_ylabel('Range gate', fontdict={"size":12, 'fontweight': 'bold'})
-        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors='None', cmap=cmap, norm=norm)
-        ax.set_title(title,  loc='left', fontdict={'fontweight': 'bold'})
+        ax.set_ylabel("Range gate", fontdict={"size":12, "fontweight": "bold"})
+        ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors="None", cmap=cmap, norm=norm)
+        ax.set_title(title,  loc="left", fontdict={"fontweight": "bold"})
         ax.legend(handles=handles, loc=4)
         if label_clusters:
             flags = df.labels
@@ -161,9 +161,11 @@ class RangeTimePlot(object):
                 if (len(t_c) > 250 or
                    (num_flags < 100 and len(t_c) > 0)) \
                    and f != -1:
+                    tct = ""
                     m = int(len(t_c) / 2)  # Time is sorted, so this is roughly the index of the median time
-                    
-                    ax.text(t_c[m], g[m], str(int(f)), fontdict={'size': 8, 'fontweight': 'bold'})  # Label cluster #
+                    if clusters[beam][int(f)]["type"] == "IS": tct = "%.1f IS"%((1-clusters[beam][int(f)]["auc"])*100)
+                    if clusters[beam][int(f)]["type"] == "GS": tct = "%.1f GS"%(clusters[beam][int(f)]["auc"]*100)
+                    ax.text(t_c[m], g[m], tct, fontdict={"size": 8, "fontweight": "bold", "color":"gold"})  # Label cluster #
         return
 
     def save(self, filepath):
@@ -179,10 +181,10 @@ class RangeTimePlot(object):
     def _add_axis(self):
         self._num_subplots_created += 1
         ax = self.fig.add_subplot(self.num_subplots, 1, self._num_subplots_created)
-        ax.tick_params(axis='both', labelsize=12)
+        ax.tick_params(axis="both", labelsize=12)
         return ax
 
-    def _add_colorbar(self, fig, ax, bounds, colormap, label=''):
+    def _add_colorbar(self, fig, ax, bounds, colormap, label=""):
         """
         Add a colorbar to the right of an axis.
         :param fig:
@@ -201,6 +203,6 @@ class RangeTimePlot(object):
         cb2 = mpl.colorbar.ColorbarBase(cax, cmap=colormap,
                                         norm=norm,
                                         ticks=bounds,
-                                        spacing='uniform',
-                                        orientation='vertical')
+                                        spacing="uniform",
+                                        orientation="vertical")
         cb2.set_label(label)

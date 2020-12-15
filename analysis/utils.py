@@ -162,6 +162,7 @@ class ScatterTypeDetection(object):
         self.proba = np.zeros(len(clust_flg_1d))
         beams = np.hstack(self.df["bmnum"])
         for bm in np.unique(beams):
+            self.clusters[bm] = {}
             for c in np.unique(clust_flg_1d):
                 clust_mask = np.logical_and(c == clust_flg_1d, bm == beams) 
                 if c == -1: self.gs_flg[clust_mask] = -1
@@ -186,7 +187,7 @@ class ScatterTypeDetection(object):
                     else: gflg, ty = -1, "US"
                     self.gs_flg[clust_mask] = gflg
                     self.proba[clust_mask] = f
-                    self.clusters[c] = {"auc": auc, "type": ty}
+                    self.clusters[bm][c] = {"auc": auc, "type": ty}
         return
 
     def indp(self):

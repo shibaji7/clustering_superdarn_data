@@ -36,10 +36,25 @@ def estimate_df_skills(df, skill_file, save):
             f.write(str(sk.chscore)+","+str(sk.bhscore)+","+str(sk.hscore)+","+str(sk.xuscore)+"\n")
     return sk
 
+def save_tags_stats(clusters, df, rad, a_name, dn, save_params):
+    dat = []
+    for k in clusters.keys():
+        for u in clusters[k].keys():
+            x = clusters[k][u]
+            x["idx"] = "%d_%d"%(k,u)
+            dat.append(x)
+    d = pd.DataFrame.from_records(dat)
+    eff_file = "../outputs/efficiency/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+    d.to_csv(eff_file, index=False, header=True)
+    clust_file = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+    df[save_params].to_csv(clust_file, index=False, header=True)
+    return
+
 def run_algorithm(rad, start, end, a_name="dbscan", gmm=False, 
                   parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "elv", "pow", "clust_flg"],
                   isgs={"case":0, "thresh":[1./3.,2./3.], "pth":0.5}, plot_beams=[7], 
-                  plot_params=["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"], save=True):
+                  plot_params=["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"], save=True, 
+                  save_params=["slist", "bmnum", "v", "w_l", "time", "p_l", "labels", "gflg_0", "gflg_1"]):
     
     if a_name=="dbscan": algo = DBSCAN_GMM(start, end, rad, BoxCox=True, load_model=False, save_model=False, run_gmm=gmm)
     if a_name=="gb-dbscan" and np.logical_not(gmm): algo = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=False)
@@ -66,6 +81,6 @@ def run_algorithm(rad, start, end, a_name="dbscan", gmm=False,
         rti.save(fname)
         rti.close()
         pass
-    
+    if save: save_tags_stats(clusters, df, rad, a_name, start, save_params)
     os.system("rm ../data/{rad}_{dn}_scans_db.csv".format(rad=rad, dn=start.strftime("%Y-%m-%d")))
     return
