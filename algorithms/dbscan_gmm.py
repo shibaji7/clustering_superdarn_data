@@ -19,7 +19,7 @@ class DBSCAN_GMM(GMMAlgorithm):
                  BoxCox=False,  # GMM
                  load_model=False,
                  save_model=False,
-                 save_output=True,
+                 save_output=False,
                  run_gmm=True):
         super().__init__(start_time, end_time, rad,
                          {'scan_eps' : scan_eps,
@@ -39,6 +39,7 @@ class DBSCAN_GMM(GMMAlgorithm):
                 # Randomize flag #'s so that colors on plots are not close to each other
                 # (necessary for large # of clusters, but not for small #s)
                 self.clust_flg = self._1D_to_scanxscan(clust_flg)
+                self.data_dict['clust_flg'] = self.clust_flg
                 print('DBSCAN+GMM clusters: ' + str(np.max(clust_flg)))
             else:
                 filepath = self._get_base_output_path()+"_db.csv"

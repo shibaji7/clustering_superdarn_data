@@ -292,7 +292,10 @@ class GMMAlgorithm(Algorithm):
         for feature in self.params['features']:
             vals = np.hstack(self.data_dict[feature])
             if self.params['BoxCox'] and (feature == 'vel' or feature == 'wid'):
+                vals[np.abs(vals)<=1e-5] = 1e-5
                 vals = boxcox(np.abs(vals))[0]
+                vals[np.isnan(vals)] = 0.
+                vals[np.isinf(vals)] = 0.
             data.append(vals)
         return np.column_stack(data)
 

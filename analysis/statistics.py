@@ -36,7 +36,7 @@ def estimate_df_skills(df, skill_file, save):
             f.write(str(sk.chscore)+","+str(sk.bhscore)+","+str(sk.hscore)+","+str(sk.xuscore)+"\n")
     return sk
 
-def save_tags_stats(clusters, df, rad, a_name, dn):
+def save_tags_stats(clusters, df, rad, a_name, dn, gmm_tag):
     dat = []
     for case in clusters.keys():
         for bm in clusters[case].keys():
@@ -45,11 +45,17 @@ def save_tags_stats(clusters, df, rad, a_name, dn):
                 x["idx"] = "%d_%d_%d"%(case,bm,cls)
                 dat.append(x)
     d = pd.DataFrame.from_records(dat)
-    eff_file = "../outputs/efficiency/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+    eff_file = "../outputs/efficiency/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=dn.strftime("%Y%m%d"))
     d.to_csv(eff_file, index=False, header=True)
-    clust_file = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+    clust_file = "../outputs/cluster_tags/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=dn.strftime("%Y%m%d"))
     df.to_csv(clust_file, index=False, header=True)
     return
+
+def get_algo_name_remove_file(a_name, gmm):
+    algo_map = {"dbscan": ["db", "dbgmm"], "gb-dbscan":[]}
+    if gmm: uname = algo_map[a_name][1]
+    else: uname = algo_map[a_name][0]
+    return uname
 
 def run_algorithm(rad, start, end, a_name="dbscan", gmm=False, 
                   parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "elv", "pow", "clust_flg"],
@@ -61,7 +67,9 @@ def run_algorithm(rad, start, end, a_name="dbscan", gmm=False,
     if a_name=="gb-dbscan" and gmm: algo = GridBasedDBSCAN_GMM(start_time, end_time, rad, load_model=False, save_model=False,
                 features=["beam", "gate", "time","vel","wid"], scan_eps=1)
     df = to_pandas(algo.data_dict, keys=parameters)
-    skill_file = "../outputs/skills/{rad}.{a_name}.{dn}.csv".format(rad=rad, a_name=a_name, dn=start.strftime("%Y%m%d"))
+    gmm_tag = ""
+    if gmm: gmm_tag = ".gmm"
+    skill_file = "../outputs/skills/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=start.strftime("%Y%m%d"))
     skills = estimate_df_skills(df, skill_file, save)
     std = ScatterTypeDetection(df.copy())
     df, clusters = std.run(thresh=isgs["thresh"], pth=isgs["pth"])
@@ -69,8 +77,8 @@ def run_algorithm(rad, start, end, a_name="dbscan", gmm=False,
         fig_title = "Rad:{rad}, Model:{a_name}, Beam:{bm}, Date:{dn} UT".format(rad=rad, a_name=a_name, bm="%02d"%beam,
                                                                                 dn=start.strftime("%Y-%m-%d"))
         os.system("mkdir -p ../outputs/figures/{rad}/{dn}/".format(rad=rad, dn=start.strftime("%Y-%m-%d")))
-        fname = "../outputs/figures/{rad}/{dn}/{bm}.{a_name}.png".format(rad=rad, dn=start.strftime("%Y-%m-%d"), 
-                                                                       bm="%02d"%beam, a_name=a_name)
+        fname = "../outputs/figures/{rad}/{dn}/{bm}.{a_name}{gt}.png".format(rad=rad, dn=start.strftime("%Y-%m-%d"), 
+                                                                       bm="%02d"%beam, a_name=a_name, gt=gmm_tag)
         rti = RangeTimePlot(100, np.unique(df.time), fig_title, num_subplots=6)
         rti.addParamPlot(df, beam, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label="Velocity [m/s]")
         rti.addParamPlot(df, beam, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label="Power [dB]")
@@ -81,6 +89,7 @@ def run_algorithm(rad, start, end, a_name="dbscan", gmm=False,
         rti.save(fname)
         rti.close()
         pass
-    if save: save_tags_stats(clusters, df, rad, a_name, start)
-    os.system("rm ../data/{rad}_{dn}_scans_db.csv".format(rad=rad, dn=start.strftime("%Y-%m-%d")))
+    if save: save_tags_stats(clusters, df, rad, a_name, start, gmm_tag)
+    os.system("rm ../data/{rad}_{dn}_scans_{algo}.csv".format(rad=rad, dn=start.strftime("%Y-%m-%d"), 
+              algo=get_algo_name_remove_file(a_name, gmm)))
     return
