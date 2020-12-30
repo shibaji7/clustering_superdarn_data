@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime as dt
 import os
+import dask
 
 a_name = "dbscan"
 parameters = ['gate', 'beam', 'vel', 'wid', 'time', 'trad_gsflg', 'pow', 'clust_flg']
@@ -14,16 +15,15 @@ def create_pickle_files():
     # Code to convert any day / radar to ".pickle" file for processing
     from pickle_creator import to_pickle_files
     df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
-    dates, rads = [], []
+    dask_out = []
     for start, end, rad in zip(df.event_start, df.event_end, df.rad):
         dn = start
-        rads.append(rad)
         while dn <= end:
             fname = "../data/%s_%s_scans.pickle"%(rad, dn.strftime("%Y-%m-%d"))
             if not os.path.exists(fname):
-                dates.append(dn)
+                dask_out.append(dask.delayed(to_pickle_files)([dn], [rad]))
             dn = dn + dt.timedelta(days=1)
-    to_pickle_files(dates, rads)
+    _ = [do.compute() for do in dask_out]
     return
 
 def run_algorithms():
@@ -54,7 +54,7 @@ def run_algorithms():
     return
 
 if __name__ == "__main__":
-    method = 2
+    method = 1
     if method == 1: create_pickle_files()
     if method == 2: run_algorithms()
     pass

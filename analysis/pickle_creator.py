@@ -66,5 +66,7 @@ def to_pickle_files(dates = [dt.datetime(2010, 1, 15)], rads = ['bks']):
     for rad in rads:
         for date in dates:
             print("date, rad: ", date, rad)
-            to_db(date, rad)
-    return
+            try:
+                to_db(date, rad)
+            except: print("Issue with data convertion:", rad, date)
+    return 0
