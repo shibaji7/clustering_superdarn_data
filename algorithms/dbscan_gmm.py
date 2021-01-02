@@ -45,6 +45,7 @@ class DBSCAN_GMM(GMMAlgorithm):
                 filepath = self._get_base_output_path()+"_db.csv"
                 clust_flg, self.runtime = self._dbscan()
                 self.clust_flg = self._1D_to_scanxscan(clust_flg)
+                self.data_dict['clust_flg'] = self.clust_flg
                 print('DBSCAN clusters: ' + str(np.max(clust_flg)))
         if save_model:
             self._save_model()

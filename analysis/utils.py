@@ -21,6 +21,11 @@ from sklearn.metrics import calinski_harabasz_score
 from sklearn.metrics import cohen_kappa_score
 from scipy.stats import beta
 
+import paramiko
+import os
+from cryptography.fernet import Fernet
+import json
+
 class Skills(object):
     """
     Internal Validation class that computes model skills.
@@ -54,21 +59,26 @@ class Skills(object):
         - Hartigan Score (hscore)
         - Xu Score (xuscore)
         """
-        self._errors()
+        self._errors_mse()
+        self._errors_mdse()
         self.chscore = calinski_harabasz_score(self.X, self.labels)
-        self.bhscore = self._ball_hall_score()
-        self.hscore = self._hartigan_score()
-        self.xuscore = self._xu_score()
+        self.bhscore, self.mdbhscore = self._ball_hall_score()
+        self.hscore, self.mdhscore = self._hartigan_score()
+        self.xuscore, self.mdxuscore = self._xu_score()
         if self.verbose:
-            print("\n Estimated Skills.")
+            print("\n Estimated Skills (MSE).")
             print(" Calinski Harabasz Score - ",self.chscore)
             print(" Ball-Hall Score - ",self.bhscore)
             print(" Hartigan Score - ",self.hscore)
             print(" Xu Score - ",self.xuscore)
+            print("\n Estimated Skills (MdSE).")
+            print(" Ball-Hall Score - ",self.mdbhscore)
+            print(" Hartigan Score - ",self.mdhscore)
+            print(" Xu Score - ",self.mdxuscore)
             print(" Estimation done.")
         return
 
-    def _errors(self):
+    def _errors_mse(self):
         """
         Estimate SSE and SSB of the model.
         """
@@ -81,6 +91,20 @@ class Skills(object):
             sse += np.sum((_x - mean_k) ** 2)
         self.sse, self.ssb = sse, ssb
         return
+    
+    def _errors_mdse(self):
+        """
+        Estimate Median SSE and SSB of the model.
+        """
+        mdsse, mdssb = 0., 0.
+        med = np.median(self.X, axis=0)
+        for k in self.clusters:
+            _x = self.X[self.labels == k]
+            med_k = np.median(_x, axis=0)
+            mdssb += len(_x) * np.sum((med_k - med) ** 2)
+            mdsse += np.sum((_x - med_k) ** 2)
+        self.mdsse, self.mdssb = mdsse, mdssb
+        return
 
     def _ball_hall_score(self):
         """
@@ -88,14 +112,14 @@ class Skills(object):
         distances of the cluster points with respect to their centroid.
         """
         n_clusters = len(set(self.labels))
-        return self.sse / n_clusters
+        return self.sse / n_clusters, self.mdsse / n_clusters
     
     def _hartigan_score(self):
         """
         The Hartigan index is based on the logarithmic relationship between
         the sum of squares within the cluster and the sum of squares between clusters.
         """
-        return np.log(self.ssb/self.sse)
+        return np.log(self.ssb/self.sse), np.log(self.mdssb/self.mdsse)
 
     def _xu_score(self):
         """
@@ -103,7 +127,9 @@ class Skills(object):
         the number N of data examples, and the sum of squared errors SSEM form M clusters.
         """
         n_clusters = len(set(self.labels))
-        return np.log(n_clusters) + self.X.shape[1] * np.log2(np.sqrt(self.sse/(self.X.shape[1]*self.X.shape[0]**2)))
+        xuscore = np.log(n_clusters) + self.X.shape[1] * np.log2(np.sqrt(self.sse/(self.X.shape[1]*self.X.shape[0]**2)))
+        mdxuscore = np.log(n_clusters) + self.X.shape[1] * np.log2(np.sqrt(self.mdsse/(self.X.shape[1]*self.X.shape[0]**2)))
+        return xuscore, mdxuscore
 
 def get_kappa(y1, y2):
     k = cohen_kappa_score(y1, y2)
@@ -210,3 +236,92 @@ class ScatterTypeDetection(object):
                     if self.case == 2: gflg = (np.abs(v)-0.139*w+0.00113*w**2<33.1).astype(int)
                     self.gs_flg[clust_mask] = gflg
         return
+    
+    
+class Conn2Remote(object):
+    
+    def __init__(self, host, user, key_filename, port=22, passcode=None):
+        self.host = host
+        self.user = user
+        self.key_filename = key_filename
+        self.passcode = passcode
+        self.port = port
+        self.con = False
+        if passcode: self.decrypt()
+        self.conn()
+        return
+    
+    def decrypt(self):
+        passcode = bytes(self.passcode, encoding="utf8")
+        cipher_suite = Fernet(passcode)
+        self.user = cipher_suite.decrypt(bytes(self.user, encoding="utf8")).decode("utf-8")
+        self.host = cipher_suite.decrypt(bytes(self.host, encoding="utf8")).decode("utf-8")
+        return
+    
+    def conn(self):
+        if not self.con:
+            self.ssh = paramiko.SSHClient()
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh.connect(hostname=self.host, port = self.port, username=self.user, key_filename=self.key_filename)
+            self.scp = paramiko.SFTPClient.from_transport(self.ssh.get_transport())
+            self.con = True
+        return
+    
+    def close(self):
+        if self.con:
+            self.scp.close()
+            self.ssh.close()
+        return
+    
+def encrypt(host, user, filename="passcode.json"):
+    passcode = Fernet.generate_key()
+    cipher_suite = Fernet(passcode)
+    host = cipher_suite.encrypt(bytes(host, encoding="utf8"))
+    user = cipher_suite.encrypt(bytes(user, encoding="utf8"))
+    with open(filename, "w") as f:
+        f.write(json.dumps({"user": user.decode("utf-8"), "host": host.decode("utf-8"), "passcode": passcode.decode("utf-8")},
+                           sort_keys=True, indent=4))
+    return
+
+def get_session(filename="passcode.json", key_filename="", isclose=False):
+    with open(filename, "r") as f:
+        obj = json.loads("".join(f.readlines()))
+        conn = Conn2Remote(obj["host"], obj["user"], 
+                           key_filename=key_filename, 
+                           passcode=obj["passcode"])
+    if isclose: conn.close()    
+    return conn
+
+def chek_remote_file_exists(fname, conn):
+    try:
+        conn.scp.stat(fname)
+        return True
+    except FileNotFoundError:
+        return False
+
+def to_remote_FS(conn, local_file, LFS, is_local_remove=False):
+    remote_file = LFS + local_file.replace("../", "")
+    print(" To file:", remote_file)
+    conn.scp.put(local_file, remote_file)
+    if is_local_remove: os.remove(local_file)
+    return
+
+def from_remote_FS(conn, local_file, LFS):
+    remote_file = LFS + local_file.replace("../", "")
+    print(" From file:", remote_file)
+    conn.scp.get(remote_file, local_file)
+    return
+
+def to_remote_FS_dir(conn, ldir, local_file, LFS, is_local_remove=False):
+    remote_file = LFS + local_file.replace("../", "")
+    rdir = LFS + ldir.replace("../", "")
+    conn.ssh.exec_command("mkdir -p " + rdir)
+    print(" To file:", remote_file)
+    conn.scp.put(local_file, remote_file)
+    if is_local_remove: os.remove(local_file)
+    return
+    
+if __name__ == "__main__":
+    #encrypt("", "")
+    #get_session(isclose=True)
+    pass
