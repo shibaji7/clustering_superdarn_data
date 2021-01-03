@@ -58,7 +58,7 @@ def save_tags_stats(conn, clusters, df, rad, a_name, dn, gmm_tag):
     return
 
 def get_algo_name_remove_file(a_name, gmm):
-    algo_map = {"dbscan": ["db", "dbgmm"], "gb-dbscan":[]}
+    algo_map = {"dbscan": ["db", "dbgmm"], "gb-dbscan":["gb-dbscan", ""]}
     if gmm: uname = algo_map[a_name][1]
     else: uname = algo_map[a_name][0]
     return uname
@@ -72,11 +72,11 @@ def run_algorithm(conn, rad, start, end, a_name="dbscan", gmm=False,
     local_file = "../data/%s_%s_scans.pickle"%(rad, start.strftime("%Y-%m-%d"))
     utils.from_remote_FS(conn, local_file, LFS)
     if a_name=="dbscan": algo = DBSCAN_GMM(start, end, rad, BoxCox=True, load_model=False, save_model=False, run_gmm=gmm)
-    if a_name=="gb-dbscan" and np.logical_not(gmm): algo = GridBasedDBSCAN(start_time, end_time, rad, load_model=False, save_model=False)
-    if a_name=="gb-dbscan" and gmm: algo = GridBasedDBSCAN_GMM(start_time, end_time, rad, load_model=False, save_model=False,
+    if a_name=="gb-dbscan" and np.logical_not(gmm): algo = GridBasedDBSCAN(start, end, rad, load_model=False, save_model=False)
+    if a_name=="gb-dbscan" and gmm: algo = GridBasedDBSCAN_GMM(start, end, rad, load_model=False, save_model=False,
                 features=["beam", "gate", "time","vel","wid"], scan_eps=1)
+    print(algo.data_dict.keys())
     df = to_pandas(algo.data_dict, keys=parameters)
-    
     skill_file = "../outputs/skills/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=start.strftime("%Y%m%d"))
     skills = estimate_df_skills(conn, df, skill_file, save)
     std = ScatterTypeDetection(df.copy())

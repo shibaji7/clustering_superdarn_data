@@ -4,14 +4,15 @@ import os
 import dask
 import utils
 import json
+import traceback
 
 LFS = "LFS/LFS_clustering_superdarn_data/"
-a_name = "dbscan"
-parameters = ['gate', 'beam', 'vel', 'wid', 'time', 'trad_gsflg', 'pow', 'clust_flg']
+a_name = "gb-dbscan"
+parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "pow", "clust_flg"]
 isgs = {"thresh":[0.5,0.5], "pth":0.5}
 plot_params = ["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"]
 plot_beams=[7]
-gmm = True
+gmm = False
 save = True
 
 def create_pickle_files():
@@ -63,6 +64,7 @@ def run_algorithms():
                               plot_params=plot_params, save=save)
             except:
                 print(" Error running algo - ", a_name,gmm_tag, rad, dn)
+                traceback.print_exc()
             #break
     conn.close()
     return
