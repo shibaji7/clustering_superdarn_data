@@ -12,7 +12,7 @@ parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "pow", "clust_
 isgs = {"thresh":[0.5,0.5], "pth":0.5}
 plot_params = ["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"]
 plot_beams=[7]
-gmm = False
+gmm = True
 save = True
 
 def create_pickle_files():

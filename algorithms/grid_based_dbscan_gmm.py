@@ -30,7 +30,7 @@ class GridBasedDBSCAN_GMM(GridBasedDBAlgorithm, GMMAlgorithm):
         if not load_model:
             clust_flg, self.runtime = self._gbdb_gmm()
             self.clust_flg = self._1D_to_scanxscan(clust_flg)
-            self.data_dict["clust_flg"] = clust_flg
+            self.data_dict["clust_flg"] = self.clust_flg
         if save_model:
             self._save_model()
 

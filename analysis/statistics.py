@@ -58,7 +58,7 @@ def save_tags_stats(conn, clusters, df, rad, a_name, dn, gmm_tag):
     return
 
 def get_algo_name_remove_file(a_name, gmm):
-    algo_map = {"dbscan": ["db", "dbgmm"], "gb-dbscan":["gb-dbscan", ""]}
+    algo_map = {"dbscan": ["db", "dbgmm"], "gb-dbscan":["gb-dbscan", "gb-dbscan.gmm"]}
     if gmm: uname = algo_map[a_name][1]
     else: uname = algo_map[a_name][0]
     return uname
