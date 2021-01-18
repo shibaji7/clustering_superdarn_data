@@ -2,9 +2,12 @@ import pandas as pd
 import datetime as dt
 import os
 import dask
-import utils
 import json
 import traceback
+import numpy as np
+
+import utils
+import plotlib
 
 LFS = "LFS/LFS_clustering_superdarn_data/"
 a_name = "gb-dbscan"
@@ -30,14 +33,8 @@ def create_pickle_files():
     _ = [do.compute() for do in dask_out]
     return
 
-def get_pubfile():
-    with open("pub.json", "r") as f:
-        obj = json.loads("".join(f.readlines()))
-        pubfile = obj["pubfile"]
-    return pubfile
-
 def run_algorithms():
-    pubfile = get_pubfile()
+    pubfile = utils.get_pubfile()
     conn = utils.get_session(key_filename=pubfile)
     from statistics import run_algorithm
     df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
@@ -69,8 +66,96 @@ def run_algorithms():
     conn.close()
     return
 
+def estimate_skill_stats():
+    df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
+    for start, end, rad, etype in zip(df.event_start, df.event_end, df.rad, df.event_type):
+        dates, rads = [], []
+        dn = start
+        while dn <= end:
+            dates.append(dn)
+            rads.append(rad)
+            dn = dn + dt.timedelta(days=1)
+        plotlib.summary_skill_scores(rads, dates, a_name, gmm, etype)
+    return
+
+def plot_scatter_histograms():
+    a_config = {}
+    with open("config/confs.json", "r") as f:
+        a_config = json.loads("".join(f.readlines()))
+    gmm_tag = "-gmm" if gmm else ""
+    fp_details = a_config[a_name + gmm_tag]
+    df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
+    I = 0
+    for start, end, rad in zip(df.event_start, df.event_end, df.rad):
+        ik = np.mod(I,4)
+        if ik==3:
+            dates, rads = [], []
+            dn = start
+            while dn <= end:
+                dates.append(dn)
+                rads.append(rad)
+                dn = dn + dt.timedelta(days=1)
+            case = 2
+            month = start.strftime("%b") + start.strftime("%Y")
+            if gmm: fname = "scatter_hist/sctr_{rad}_{a_name}.gmm_case.{case}_kind.1_{month}.png".format(rad=rad, 
+                                                                                                         a_name=a_name, case=case,
+                                                                                                         month=month)
+            else: fname = "scatter_hist/sctr_{rad}_{a_name}_case.{case}_kind.1_{month}.png".format(rad=rad, 
+                                                                                                       a_name=a_name, case=case,
+                                                                                                       month=month)
+            plotlib.histograms_scatters_from_remote(rads, dates, a_name, gmm=gmm, case=case, png_fname=fname, 
+                                                    fp_details_list = fp_details[ik], kind=1)
+        I += 1
+    return
+
+def plot_RTI():
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
+    from statistics import plot_rti_from_arc
+    df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
+    for start, end, rad in zip(df.event_start, df.event_end, df.rad):
+        dn = start
+        while dn <= end:
+            plot_rti_from_arc(conn, rad, dn, a_name, gmm=gmm, plot_beams=plot_beams, is_local_remove=False)
+            dn = dn + dt.timedelta(days=1)
+    conn.close()
+    return
+
+def plot_individual_scatter_histograms():
+    a_config = {}
+    gmm_tag = "-gmm" if gmm else ""
+    with open("config/confs_indp.json", "r") as f:
+        a_config = json.loads("".join(f.readlines()))
+    fp_details = a_config[a_name + gmm_tag]
+    df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
+    I = 0
+    for start, end, rad in zip(df.event_start, df.event_end, df.rad):
+        ik = np.mod(I,4)
+        if ik>=0:
+            dates, rads = [], []
+            dn = start
+            while dn <= end:
+                dates.append(dn)
+                rads.append(rad)
+                dn = dn + dt.timedelta(days=1)
+            case = 2
+            month = start.strftime("%b") + start.strftime("%Y")
+            if gmm: fname = "scatter_hist_indp/sctr_{rad}_{a_name}.gmm_case.{case}_kind.0_{month}.png".format(rad=rad, 
+                                                                                                 a_name=a_name, case=case, month=month)
+            else: fname = "scatter_hist_indp/sctr_{rad}_{a_name}_case.{case}_kind.0_{month}.png".format(rad=rad, 
+                                                                                                        a_name=a_name, case=case, 
+                                                                                                        month=month)
+            plotlib.histograms_scatters_from_remote(rads, dates, a_name, gmm=gmm, case=case, png_fname=fname, 
+                                                    fp_details_list = fp_details[ik], kind=0)
+        I += 1
+    return
+
 if __name__ == "__main__":
-    method = 2
+    method = 4
     if method == 1: create_pickle_files()
     if method == 2: run_algorithms()
+    if method == 3: estimate_skill_stats()
+    if method == 4: plot_scatter_histograms()
+    if method == 5: plot_RTI()
+    if method == 6: plot_individual_scatter_histograms()
     pass

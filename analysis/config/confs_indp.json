@@ -1,0 +1,282 @@
+{
+    "dbscan": [
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2,3], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2,3], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[2,3], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ]
+    ],
+    "gb-dbscan": [
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[0,1], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[2,3], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ]
+    ],
+    "dbscan-gmm": [
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[1,2], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[0,1], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2,3], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2,3], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2,3], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[2,3], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ]
+    ],
+    "gb-dbscan-gmm": [
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[0,1], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[0,1], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ],
+        [
+            {
+                "v": {"dist": 7, "ids":[1,2,3,4], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 7, "ids":[0,1,2,3], "bins":50, "ylim":[0,0.6], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 4, "ids":[0,1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[1], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            },
+            {
+                "v": {"dist": 3, "ids":[2,3], "bins":50, "ylim":[0,0.5], "rot":45, "dh":0.03, "log":true},
+                "w_l": {"dist": 7, "ids":[1,2], "bins":50, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":true},
+                "p": {"dist": 7, "ids":[0], "bins":50, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":false}
+            }
+        ]
+    ]
+}

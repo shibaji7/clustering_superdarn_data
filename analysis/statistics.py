@@ -37,7 +37,7 @@ def estimate_df_skills(conn, df, skill_file, save):
             f.write("chscore,bhscore,hscore,xuscore,mdbhscore,mdhscore,mdxuscore\n")
             f.write(str(sk.chscore)+","+str(sk.bhscore)+","+str(sk.hscore)+","+str(sk.xuscore)+","+\
                     str(sk.mdbhscore)+","+str(sk.mdhscore)+","+str(sk.mdxuscore)+"\n")
-    utils.to_remote_FS(conn, skill_file, LFS, is_local_remove=True)
+        utils.to_remote_FS(conn, skill_file, LFS, is_local_remove=True)
     return sk
 
 def save_tags_stats(conn, clusters, df, rad, a_name, dn, gmm_tag):
@@ -105,4 +105,35 @@ def run_algorithm(conn, rad, start, end, a_name="dbscan", gmm=False,
                                                          algo=get_algo_name_remove_file(a_name, gmm))
     if os.path.exists(cache): os.remove(cache)
     os.system("rm -rf ../outputs/figures/*")
+    return
+
+def plot_rti_from_arc(conn, rad, date, a_name, gmm=False, plot_beams=[7], is_local_remove=False, 
+                      isgs={"thresh":[0.5,0.5], "pth":0.5}, cache_clean=True):
+    gmm_tag = ".gmm" if gmm else ""
+    clust_file = "../outputs/cluster_tags/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, 
+                                                                              dn=date.strftime("%Y%m%d"))
+    utils.fetch_file(conn, clust_file, LFS)
+    if os.path.exists(clust_file):
+        df = pd.read_csv(clust_file)
+        std = ScatterTypeDetection(df.copy())
+        df, clusters = std.run(thresh=isgs["thresh"], pth=isgs["pth"])
+        for beam in plot_beams:
+            fig_title = "Rad:{rad}, Model:{a_name}, Beam:{bm}, Date:{dn} UT".format(rad=rad, a_name=a_name, bm="%02d"%beam,
+                                                                                    dn=date.strftime("%Y-%m-%d"))
+            ldir = "../outputs/figures/{rad}/{dn}/".format(rad=rad, dn=date.strftime("%Y-%m-%d"))
+            os.system("mkdir -p " + ldir)
+            fname = "../outputs/figures/{rad}/{dn}/{bm}.{a_name}{gt}.png".format(rad=rad, dn=date.strftime("%Y-%m-%d"), 
+                                                                           bm="%02d"%beam, a_name=a_name, gt=gmm_tag)
+            rti = RangeTimePlot(100, np.unique(df.time), fig_title, num_subplots=6)
+            rti.addParamPlot(df, beam, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label="Velocity [m/s]")
+            rti.addParamPlot(df, beam, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label="Power [dB]")
+            rti.addParamPlot(df, beam, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label="Spec. Width [m/s]")
+            rti.addCluster(df, beam, a_name, label_clusters=True, skill=None, xlabel="")
+            rti.addGSIS(df, beam, GS_CASES[0], xlabel="", zparam="gflg_0_0")
+            rti.addGSIS(df, beam, GS_CASES[0], xlabel="Time, UT", zparam="gflg_0_1", clusters=clusters[0], label_clusters=True)
+            rti.save(fname)
+            rti.close()
+            utils.to_remote_FS_dir(conn, ldir, fname, LFS, is_local_remove=is_local_remove)
+    if cache_clean: os.system("rm -rf ../outputs/figures/*")
+    os.system("rm -rf ../outputs/cluster_tags/*")
     return

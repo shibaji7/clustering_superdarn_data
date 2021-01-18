@@ -1,3 +1,4 @@
+import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +14,7 @@ import pandas as pd
 
 import utils
 
+LFS = "LFS/LFS_clustering_superdarn_data/"
 
 CLUSTER_CMAP = plt.cm.gist_rainbow
 
@@ -210,7 +212,32 @@ class RangeTimePlot(object):
                                         spacing="uniform",
                                         orientation="vertical")
         cb2.set_label(label)
-
+        return
+        
+def summary_skill_scores(rads, dates, a_name, gmm=False, etype=""):
+    if gmm: fname = "../outputs/skills/{rad}.{a_name}.gmm.{dn}.csv"
+    else: fname = "../outputs/skills/{rad}.{a_name}.{dn}.csv"
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
+    X = pd.DataFrame()
+    for rad, dn in zip(rads, dates):
+        floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+        if utils.fetch_file(conn, floc, LFS):
+            y = pd.read_csv(floc)
+            X = pd.concat([X,y])
+    X = X.median().to_frame().T
+    X["model"] = a_name
+    X["gmm"] = gmm
+    X["rad"] = rad
+    X["event_type"] = etype
+    if not os.path.exists("../outputs/skill.csv"): X.to_csv("../outputs/skill.csv", index=False, float_format="%g")
+    else:
+        y = pd.read_csv("../outputs/skill.csv")
+        y = pd.concat([y, X])
+        y = y.drop_duplicates()
+        y.to_csv("../outputs/skill.csv", index=False, float_format="%g")
+    os.system("rm ../outputs/skills/*")
+    return
         
 def histograms_skill_scores(rads, a_name, starts, ends, gmm=False):
     if gmm: fname = "../outputs/skills/{rad}.{a_name}.{dn}.csv"
@@ -247,9 +274,10 @@ def histograms_skill_scores(rads, a_name, starts, ends, gmm=False):
     ax.text(0.2, 0.9, r"$\mu_{Xu}=$"+"%.2f"%np.mean(X[:,3]), ha="left", va="center", transform=ax.transAxes)
     if gmm: fig.savefig("../outputs/histograms_ss_%s.gmm.png"%a_name, bbox_inches="tight")
     else: fig.savefig("../outputs/histograms_ss_%s.png"%a_name, bbox_inches="tight")
+    utils.remove_local_files(fname)
     return
 
-def find_peaks(ax, x, y, dist, ids, lim, rotation, dh, log):
+def find_peaks(ax, x, y, dist, ids, lim, rotation, dh, log, param_name="Velocity"):
     def parse_params_text(val, log=True):
         txt = "-" if val < 0 else ""
         if log: txt += "$10^{%.1f}$"%np.abs(val)
@@ -258,7 +286,7 @@ def find_peaks(ax, x, y, dist, ids, lim, rotation, dh, log):
     from scipy.signal import find_peaks
     peaks, _ = find_peaks(y, distance=dist)
     lines = (x[peaks] + x[peaks+1])/2
-    print(" Lines:", lines)
+    print(" Lines(%s):"%param_name, lines)
     for ix, l in enumerate(lines):
         if ix in ids: 
             ax.axvline(l, color="k", ls="--", lw=0.6)
@@ -266,7 +294,7 @@ def find_peaks(ax, x, y, dist, ids, lim, rotation, dh, log):
     return 
 
 def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, kind=1, params=["v", "w_l", "p_l"],
-                       fp_details={
+                       fp_details_list={
                            "v": {"dist": 7, "ids":[1,2,3,4,5,6], "bins":100, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":True},
                            "w_l": {"dist": 7, "ids":[1,2,3], "bins":100, "ylim":[0,1.4], "rot":45, "dh":0.07, "log":True},
                            "p": {"dist": 7, "ids":[1], "bins":100, "ylim":[0,0.4], "rot":45, "dh":0.03, "log":False}
@@ -294,7 +322,7 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     v = np.sign(v)*np.log10(np.abs(v))
     vhist, vbins = np.histogram(v, bins=fp_details["v"]["bins"], density=True)
     find_peaks(ax, vbins, vhist, dist=fp_details["v"]["dist"], ids=fp_details["v"]["ids"], lim=fp_details["v"]["ylim"][1],
-              rotation=fp_details["v"]["rot"], dh=fp_details["v"]["dh"], log=fp_details["v"]["log"])
+              rotation=fp_details["v"]["rot"], dh=fp_details["v"]["dh"], log=fp_details["v"]["log"], param_name="Velocity")
     ax.hist(v, bins=fp_details["v"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
     ax.set_xlim(-4,4)
     ax.set_xticklabels([r"-$10^4$", r"-$10^2$", r"$10^0$", r"$10^2$", r"$10^4$"])
@@ -307,7 +335,7 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     w = np.sign(w)*np.log10(np.abs(w))
     whist, wbins = np.histogram(w, bins=fp_details["w_l"]["bins"], density=True)
     find_peaks(ax, wbins, whist, dist=fp_details["w_l"]["dist"], ids=fp_details["w_l"]["ids"], lim=fp_details["w_l"]["ylim"][1],
-              rotation=fp_details["w_l"]["rot"], dh=fp_details["w_l"]["dh"], log=fp_details["w_l"]["log"])
+              rotation=fp_details["w_l"]["rot"], dh=fp_details["w_l"]["dh"], log=fp_details["w_l"]["log"], param_name="Spect. Width")
     ax.hist(w, bins=fp_details["w_l"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
     ax.set_xlabel(r"Spect. Width, $ms^{-1}$")
     ax.set_xlim(-2,4)
@@ -320,7 +348,7 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     ax.text(0.5, 1.05, "GS: "+det_type[case], ha="left", va="center", transform=ax.transAxes, fontdict={"size":7,"color":"r"})
     phist, pbins = np.histogram(p, bins=fp_details["p"]["bins"], density=True)
     find_peaks(ax, pbins, phist, dist=fp_details["p"]["dist"], ids=fp_details["p"]["ids"], lim=fp_details["p"]["ylim"][1],
-              rotation=fp_details["p"]["rot"], dh=fp_details["p"]["dh"], log=fp_details["p"]["log"])
+              rotation=fp_details["p"]["rot"], dh=fp_details["p"]["dh"], log=fp_details["p"]["log"], param_name="Power")
     ax.hist(p, bins=fp_details["p"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
     ax.set_xlabel("Power, dB")
     ax.set_xlim([0,20])
@@ -328,4 +356,81 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     fig.subplots_adjust(hspace=0.5, wspace=0.4)
     if gmm: fig.savefig("../outputs/histograms_scat_%s.gmm_%s_%d_%d.png"%(a_name,ty,case,kind), bbox_inches="tight")
     else: fig.savefig("../outputs/histograms_scat_%s_%s_%d_%d.png"%(a_name,ty,case,kind), bbox_inches="tight")
+    return
+
+
+
+def histograms_scatters_from_remote(rads, dates, a_name, sctrs=[-1, 0, 1], gmm=False, case=0, kind=0, params=["v", "w_l", "p_l"],
+                       fp_details_list=[], png_fname=""):
+    det_type = {0:"Sudden [2004]", 1:"Blanchard [2006]", 2:"Blanchard [2009]"}
+    types = {-1:"US", 0:"IS", 1:"GS"}
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
+    if gmm: fname = "../outputs/cluster_tags/{rad}.{a_name}.gmm.{dn}.csv"
+    else: fname = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv"
+    fig, axes = plt.subplots(dpi=150, figsize=(10, 10), nrows=3, ncols=3)
+    for rad, dn in zip(rads, dates):
+        floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+        utils.fetch_file(conn, floc, LFS)
+    
+    for ix, sctr in enumerate(sctrs):
+        if ix >= 0:
+            fp_details = fp_details_list[ix]
+            X = pd.DataFrame()
+            for rad, dn in zip(rads, dates):
+                floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+                if os.path.exists(floc):
+                    y = pd.read_csv(floc)
+                    y = y[y["gflg_%d_%d"%(case,kind)]==sctr]
+                    y = y.replace([np.inf, -np.inf], np.nan).dropna()
+                    X = pd.concat([X, y[params]])
+            X = X[params].values
+            ty = types[sctr]
+            ax = axes[ix, 0]
+            v = X[:,0]
+            v[v==0] = 1e-5
+            v = np.sign(v)*np.log10(np.abs(v))
+            vhist, vbins = np.histogram(v, bins=fp_details["v"]["bins"], density=True)
+            find_peaks(ax, vbins, vhist, dist=fp_details["v"]["dist"], ids=fp_details["v"]["ids"], lim=fp_details["v"]["ylim"][1],
+                      rotation=fp_details["v"]["rot"], dh=fp_details["v"]["dh"], log=fp_details["v"]["log"], param_name="Velocity")
+            ax.hist(v, bins=fp_details["v"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
+            ax.set_xlim(-4,4)
+            ax.set_xticks([-4,-2,0,2,4])
+            ax.set_xticklabels([r"-$10^4$", r"-$10^2$", r"$10^0$", r"$10^2$", r"$10^4$"])
+            ax.set_xlabel(r"Velocity, $ms^{-1}$")
+            ax.set_ylabel("Density")
+            ax.set_ylim(fp_details["v"]["ylim"])
+
+            ax = axes[ix, 1]
+            w = X[:,1]
+            w[w==0] = 1e-5
+            w = np.sign(w)*np.log10(np.abs(w))
+            whist, wbins = np.histogram(w, bins=fp_details["w_l"]["bins"], density=True)
+            find_peaks(ax, wbins, whist, dist=fp_details["w_l"]["dist"], ids=fp_details["w_l"]["ids"], lim=fp_details["w_l"]["ylim"][1],
+                      rotation=fp_details["w_l"]["rot"], dh=fp_details["w_l"]["dh"], log=fp_details["w_l"]["log"], 
+                       param_name="Spect. Width")
+            ax.hist(w, bins=fp_details["w_l"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
+            ax.set_xlabel(r"Spect. Width, $ms^{-1}$")
+            ax.set_xlim(-2,4)
+            ax.set_ylim(fp_details["w_l"]["ylim"])
+            ax.set_xticks([-2,0,2,4])
+            ax.set_xticklabels([r"-$10^2$", r"-$10^0$", r"$10^2$", r"$10^4$"])
+
+            ax = axes[ix, 2]
+            p = X[:,2]
+            ax.text(1.02, 0.1, "Type: "+ty, ha="left", va="center", transform=ax.transAxes, rotation=90, fontdict={"size":7,"color":"r"})
+            ax.text(1.02, 0.8, "ACFs~ %dK"%(len(v)/1000), ha="left", va="center", transform=ax.transAxes, rotation=90, 
+                    fontdict={"size":7,"color":"r"})
+            if ix==0: ax.text(0.5, 1.05, "GS: "+det_type[case], ha="left", va="center", transform=ax.transAxes, 
+                              fontdict={"size":7,"color":"r"})
+            phist, pbins = np.histogram(p, bins=fp_details["p"]["bins"], density=True)
+            find_peaks(ax, pbins, phist, dist=fp_details["p"]["dist"], ids=fp_details["p"]["ids"], lim=fp_details["p"]["ylim"][1],
+                  rotation=fp_details["p"]["rot"], dh=fp_details["p"]["dh"], log=fp_details["p"]["log"], param_name="Power")
+            ax.hist(p, bins=fp_details["p"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
+            ax.set_xlabel("Power, dB")
+            ax.set_xlim([0,20])
+            ax.set_ylim(fp_details["p"]["ylim"])
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+    fig.savefig("../outputs/" + png_fname, bbox_inches="tight")
+    os.system("rm -rf ../outputs/cluster_tags/*")
     return

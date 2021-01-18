@@ -283,7 +283,7 @@ def encrypt(host, user, filename="passcode.json"):
                            sort_keys=True, indent=4))
     return
 
-def get_session(filename="passcode.json", key_filename="", isclose=False):
+def get_session(filename="config/passcode.json", key_filename="", isclose=False):
     with open(filename, "r") as f:
         obj = json.loads("".join(f.readlines()))
         conn = Conn2Remote(obj["host"], obj["user"], 
@@ -320,6 +320,18 @@ def to_remote_FS_dir(conn, ldir, local_file, LFS, is_local_remove=False):
     conn.scp.put(local_file, remote_file)
     if is_local_remove: os.remove(local_file)
     return
+
+def get_pubfile():
+    with open("config/pub.json", "r") as f:
+        obj = json.loads("".join(f.readlines()))
+        pubfile = obj["pubfile"]
+    return pubfile
+
+def fetch_file(conn, local_file, LFS):
+    remote_file = LFS + local_file.replace("../", "")
+    is_remote = chek_remote_file_exists(remote_file, conn)
+    if is_remote: from_remote_FS(conn, local_file, LFS)
+    return is_remote
     
 if __name__ == "__main__":
     #encrypt("", "")
