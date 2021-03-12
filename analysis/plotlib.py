@@ -7,10 +7,14 @@ from matplotlib.dates import DateFormatter, num2date
 from matplotlib import patches
 import matplotlib.patches as mpatches
 import random
-
+import pytz
 
 import datetime as dt
 import pandas as pd
+
+import pydarn
+from astral.sun import sun
+from astral import Observer
 
 import utils
 
@@ -361,7 +365,7 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
 
 
 def histograms_scatters_from_remote(rads, dates, a_name, sctrs=[-1, 0, 1], gmm=False, case=0, kind=0, params=["v", "w_l", "p_l"],
-                       fp_details_list=[], png_fname=""):
+                       fp_details_list=[], png_fname="", gates=10):
     det_type = {0:"Sudden [2004]", 1:"Blanchard [2006]", 2:"Blanchard [2009]"}
     types = {-1:"US", 0:"IS", 1:"GS"}
     pubfile = utils.get_pubfile()
@@ -381,7 +385,7 @@ def histograms_scatters_from_remote(rads, dates, a_name, sctrs=[-1, 0, 1], gmm=F
                 floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
                 if os.path.exists(floc):
                     y = pd.read_csv(floc)
-                    y = y[y["gflg_%d_%d"%(case,kind)]==sctr]
+                    y = y[(y["gflg_%d_%d"%(case,kind)]==sctr) & (y.slist>=gates)]
                     y = y.replace([np.inf, -np.inf], np.nan).dropna()
                     X = pd.concat([X, y[params]])
             X = X[params].values
@@ -433,4 +437,155 @@ def histograms_scatters_from_remote(rads, dates, a_name, sctrs=[-1, 0, 1], gmm=F
     fig.subplots_adjust(hspace=0.4, wspace=0.4)
     fig.savefig("../outputs/" + png_fname, bbox_inches="tight")
     os.system("rm -rf ../outputs/cluster_tags/*")
+    return
+
+def histograms_indp_scatters_from_remote(rads, dates, a_name, sctrs=[0, 1], gmm=False, case=0, kind=0, params=["v", "w_l", "p_l"],
+                       fp_details_list=[], png_fname=""):
+    det_type = {0:"Sudden [2004]", 1:"Blanchard [2006]", 2:"Blanchard [2009]"}
+    types = {-1:"US", 0:"IS", 1:"GS"}
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
+    if gmm: fname = "../outputs/cluster_tags/{rad}.{a_name}.gmm.{dn}.csv"
+    else: fname = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv"
+    fig, axes = plt.subplots(dpi=150, figsize=(10, 7), nrows=2, ncols=3)
+    for rad, dn in zip(rads, dates):
+        floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+        utils.fetch_file(conn, floc, LFS)
+    
+    for ix, sctr in enumerate(sctrs):
+        if ix >= 0:
+            fp_details = fp_details_list[ix]
+            X = pd.DataFrame()
+            for rad, dn in zip(rads, dates):
+                floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+                if os.path.exists(floc):
+                    y = pd.read_csv(floc)
+                    y["classical"] = utils.ScatterTypeDetection.indp_classical(y.w_l, y.v)
+                    y = y[y.classical==sctr]
+                    y = y.replace([np.inf, -np.inf], np.nan).dropna()
+                    X = pd.concat([X, y[params]])
+            X = X[params].values
+            ty = types[sctr]
+            ax = axes[ix, 0]
+            v = X[:,0]
+            v[v==0] = 1e-5
+            v = np.sign(v)*np.log10(np.abs(v))
+            vhist, vbins = np.histogram(v, bins=fp_details["v"]["bins"], density=True)
+            find_peaks(ax, vbins, vhist, dist=fp_details["v"]["dist"], ids=fp_details["v"]["ids"], lim=fp_details["v"]["ylim"][1],
+                      rotation=fp_details["v"]["rot"], dh=fp_details["v"]["dh"], log=fp_details["v"]["log"], param_name="Velocity")
+            ax.hist(v, bins=fp_details["v"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
+            ax.set_xlim(-4,4)
+            ax.set_xticks([-4,-2,0,2,4])
+            ax.set_xticklabels([r"-$10^4$", r"-$10^2$", r"$10^0$", r"$10^2$", r"$10^4$"])
+            ax.set_xlabel(r"Velocity, $ms^{-1}$")
+            ax.set_ylabel("Density")
+            ax.set_ylim(fp_details["v"]["ylim"])
+
+            ax = axes[ix, 1]
+            w = X[:,1]
+            w[w==0] = 1e-5
+            w = np.sign(w)*np.log10(np.abs(w))
+            whist, wbins = np.histogram(w, bins=fp_details["w_l"]["bins"], density=True)
+            find_peaks(ax, wbins, whist, dist=fp_details["w_l"]["dist"], ids=fp_details["w_l"]["ids"], lim=fp_details["w_l"]["ylim"][1],
+                      rotation=fp_details["w_l"]["rot"], dh=fp_details["w_l"]["dh"], log=fp_details["w_l"]["log"], 
+                       param_name="Spect. Width")
+            ax.hist(w, bins=fp_details["w_l"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
+            ax.set_xlabel(r"Spect. Width, $ms^{-1}$")
+            ax.set_xlim(-2,4)
+            ax.set_ylim(fp_details["w_l"]["ylim"])
+            ax.set_xticks([-2,0,2,4])
+            ax.set_xticklabels([r"-$10^2$", r"-$10^0$", r"$10^2$", r"$10^4$"])
+
+            ax = axes[ix, 2]
+            p = X[:,2]
+            ax.text(1.02, 0.1, "Type: "+ty, ha="left", va="center", transform=ax.transAxes, rotation=90, fontdict={"size":7,"color":"r"})
+            ax.text(1.02, 0.8, "ACFs~ %dK"%(len(v)/1000), ha="left", va="center", transform=ax.transAxes, rotation=90, 
+                    fontdict={"size":7,"color":"r"})
+            if ix==0: ax.text(0.5, 1.05, "GS: "+det_type[case], ha="left", va="center", transform=ax.transAxes, 
+                              fontdict={"size":7,"color":"r"})
+            phist, pbins = np.histogram(p, bins=fp_details["p"]["bins"], density=True)
+            find_peaks(ax, pbins, phist, dist=fp_details["p"]["dist"], ids=fp_details["p"]["ids"], lim=fp_details["p"]["ylim"][1],
+                  rotation=fp_details["p"]["rot"], dh=fp_details["p"]["dh"], log=fp_details["p"]["log"], param_name="Power")
+            ax.hist(p, bins=fp_details["p"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
+            ax.set_xlabel("Power, dB")
+            ax.set_xlim([0,20])
+            ax.set_ylim(fp_details["p"]["ylim"])
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+    fig.savefig("../outputs/" + png_fname, bbox_inches="tight")
+    os.system("rm -rf ../outputs/cluster_tags/*")
+    return
+
+def plot_2D_hist(rads, dates, a_name, gmm, case, kind, png_fname):
+    def to_2dhist(df, zparam, val, xparam="umin", yparam="doy"):
+        df = df[ [xparam, yparam, zparam] ]
+        df = df[df[zparam]==val]
+        df = df.groupby( [xparam, yparam] ).count().reset_index()
+        df = df[ [xparam, yparam, zparam] ].pivot( xparam, yparam )
+        _x = df.index.values
+        _y = df.columns.levels[1].values
+        _xx, _yy  = np.meshgrid( _x, _y )
+        _zz = np.ma.masked_where(np.isnan(df[zparam].values), df[zparam].values)
+        return _xx, _yy, _zz, _x, _y
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
+    if gmm: fname = "../outputs/cluster_tags/{rad}.{a_name}.gmm.{dn}.csv"
+    else: fname = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv"
+    fig, axes = plt.subplots(dpi=150, figsize=(10, 10), nrows=2, ncols=2)
+    X = pd.DataFrame()
+    dumin, ix = 3, 0
+    suntime = {"doy":[], "sunrise":[], "sunset":[]}
+    for rad, dn in zip(rads, dates):
+        floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+        utils.fetch_file(conn, floc, LFS)
+        if os.path.exists(floc):
+            hdw = pydarn.read_hdw_file(rad)
+            o = Observer(hdw.geographic.lat, hdw.geographic.lon)
+            s = sun(o, date=dn)
+            suntime["doy"].append(dn.dayofyear)
+            suntime["sunrise"].append(s["sunrise"].hour + (dumin/60.)*int(s["sunrise"].minute/dumin))
+            suntime["sunset"].append(s["sunset"].hour + (dumin/60.)*int(s["sunset"].minute/dumin))
+            u = pd.read_csv(floc)
+            u.time = u.time.apply(lambda t: num2date(t, tz=pytz.timezone("UTC")))
+            u["ut"], u["doy"], u["umin"] = u.time.dt.hour, u.time.dt.dayofyear,\
+                        u.time.apply(lambda t: t.hour + (dumin/60.)*int(t.minute/dumin))
+            X = pd.concat([X, u])
+            os.system("rm -rf ../outputs/cluster_tags/*")
+        #if ix == 3: break
+        ix += 1
+    X = X[["time", "slist", "bmnum", "trad_gsflg", "gflg_%d_%d"%(case,kind), "ut", "doy", "umin"]]
+    ax = axes[0,0]
+    ax.set_xlabel("UT")
+    ax.set_ylabel("DoY")
+    ax.text(0.1,1.03,"IS: fitacf",ha="left",va="center",transform=ax.transAxes)
+    _xx, _yy, _zz, _x, _y = to_2dhist(X, "trad_gsflg", 0)
+    ax.pcolormesh(_xx, _yy, _zz.T, cmap="jet")
+    ax.plot(suntime["sunrise"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax.plot(suntime["sunset"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax = axes[1,0]
+    ax.set_xlabel("UT")
+    ax.set_ylabel("DoY")
+    ax.text(0.1,1.03,"GS: fitacf",ha="left",va="center",transform=ax.transAxes)
+    _xx, _yy, _zz, _x, _y = to_2dhist(X, "trad_gsflg", 1)
+    ax.pcolormesh(_xx, _yy, _zz.T, cmap="jet")
+    ax.plot(suntime["sunrise"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax.plot(suntime["sunset"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax = axes[0,1]
+    ax.set_xlabel("UT")
+    ax.set_ylabel("DoY")
+    ax.text(0.1,1.03,"IS: Blanchard.09",ha="left",va="center",transform=ax.transAxes)
+    _xx, _yy, _zz, _x, _y = to_2dhist(X, "gflg_%d_%d"%(case,kind), 0)
+    ax.pcolormesh(_xx, _yy, _zz.T, cmap="jet")
+    ax.plot(suntime["sunrise"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax.plot(suntime["sunset"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax = axes[1,1]
+    ax.set_xlabel("UT")
+    ax.set_ylabel("DoY")
+    ax.text(0.1,1.03,"GS: Blanchard.09",ha="left",va="center",transform=ax.transAxes)
+    _xx, _yy, _zz, _x, _y = to_2dhist(X, "gflg_%d_%d"%(case,kind), 1)
+    ax.pcolormesh(_xx, _yy, _zz.T, cmap="jet")
+    ax.plot(suntime["sunrise"], suntime["doy"], color="k", lw=1.5, ls="--")
+    ax.plot(suntime["sunset"], suntime["doy"], color="k", lw=1.5, ls="--")
+    fig.suptitle(png_fname.replace(".png", "").replace("_", " "))
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    fig.savefig("../outputs/" + png_fname, bbox_inches="tight")
     return

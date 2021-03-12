@@ -237,6 +237,13 @@ class ScatterTypeDetection(object):
                     self.gs_flg[clust_mask] = gflg
         return
     
+    @staticmethod
+    def indp_classical(w, v, case=2):
+        if case == 0: gflg = (np.abs(v)+w/3 < 30).astype(int)
+        if case == 1: gflg = (np.abs(v)+w/4 < 60).astype(int)
+        if case == 2: gflg = (np.abs(v)-0.139*w+0.00113*w**2<33.1).astype(int)
+        return gflg
+    
     
 class Conn2Remote(object):
     
