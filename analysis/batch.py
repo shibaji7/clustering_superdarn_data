@@ -109,6 +109,7 @@ def plot_scatter_histograms():
     return
 
 def plot_RTI():
+    case, kind = 2, 1
     pubfile = utils.get_pubfile()
     conn = utils.get_session(key_filename=pubfile)
     from statistics import plot_rti_from_arc
@@ -116,7 +117,7 @@ def plot_RTI():
     for start, end, rad in zip(df.event_start, df.event_end, df.rad):
         dn = start
         while dn <= end:
-            plot_rti_from_arc(conn, rad, dn, a_name, gmm=gmm, plot_beams=plot_beams, is_local_remove=False)
+            plot_rti_from_arc(conn, rad, dn, a_name, gmm=gmm, plot_beams=plot_beams, is_local_remove=False, case=case, kind=kind)
             dn = dn + dt.timedelta(days=1)
     conn.close()
     return
@@ -167,7 +168,7 @@ def plot_2D_histograms():
     return
 
 if __name__ == "__main__":
-    method = 7
+    method = 5
     if method == 1: create_pickle_files()
     if method == 2: run_algorithms()
     if method == 3: estimate_skill_stats()

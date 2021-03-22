@@ -108,7 +108,7 @@ def run_algorithm(conn, rad, start, end, a_name="dbscan", gmm=False,
     return
 
 def plot_rti_from_arc(conn, rad, date, a_name, gmm=False, plot_beams=[7], is_local_remove=False, 
-                      isgs={"thresh":[0.5,0.5], "pth":0.5}, cache_clean=True):
+                      isgs={"thresh":[0.5,0.5], "pth":0.5}, cache_clean=True, case=2, kind=1):
     gmm_tag = ".gmm" if gmm else ""
     clust_file = "../outputs/cluster_tags/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, 
                                                                               dn=date.strftime("%Y%m%d"))
@@ -124,13 +124,15 @@ def plot_rti_from_arc(conn, rad, date, a_name, gmm=False, plot_beams=[7], is_loc
             os.system("mkdir -p " + ldir)
             fname = "../outputs/figures/{rad}/{dn}/{bm}.{a_name}{gt}.png".format(rad=rad, dn=date.strftime("%Y-%m-%d"), 
                                                                            bm="%02d"%beam, a_name=a_name, gt=gmm_tag)
+            print(df.head())
             rti = RangeTimePlot(100, np.unique(df.time), fig_title, num_subplots=6)
             rti.addParamPlot(df, beam, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label="Velocity [m/s]")
             rti.addParamPlot(df, beam, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label="Power [dB]")
             rti.addParamPlot(df, beam, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label="Spec. Width [m/s]")
             rti.addCluster(df, beam, a_name, label_clusters=True, skill=None, xlabel="")
-            rti.addGSIS(df, beam, GS_CASES[0], xlabel="", zparam="gflg_0_0")
-            rti.addGSIS(df, beam, GS_CASES[0], xlabel="Time, UT", zparam="gflg_0_1", clusters=clusters[0], label_clusters=True)
+            rti.addGSIS(df, beam, GS_CASES[case], xlabel="", zparam="gflg_%d_0"%case)
+            rti.addGSIS(df, beam, GS_CASES[case], xlabel="Time, UT", zparam="gflg_%d_%d"%(case, kind), 
+                        clusters=clusters[case], label_clusters=True)
             rti.save(fname)
             rti.close()
             utils.to_remote_FS_dir(conn, ldir, fname, LFS, is_local_remove=is_local_remove)
