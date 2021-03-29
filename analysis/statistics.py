@@ -139,3 +139,48 @@ def plot_rti_from_arc(conn, rad, date, a_name, gmm=False, plot_beams=[7], is_loc
     if cache_clean: os.system("rm -rf ../outputs/figures/*")
     os.system("rm -rf ../outputs/cluster_tags/*")
     return
+
+def ribiero_gflg_RTI(rads, dates, a_name, gmm, case, kind):
+    gmm_tag = ".gmm" if gmm else ""
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
+    if gmm: fname = "../outputs/cluster_tags/{rad}.{a_name}.gmm.{dn}.csv"
+    else: fname = "../outputs/cluster_tags/{rad}.{a_name}.{dn}.csv"
+    X, ix = pd.DataFrame(), 0
+    for rad, dn in zip(rads, dates):
+        floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
+        utils.fetch_file(conn, floc, LFS)
+        if os.path.exists(floc):
+            u = pd.read_csv(floc)
+            clust_type = "gflg_%d_%d"%(case,kind)
+            clust_flag = np.array(u.labels); gs_flg = np.zeros_like(clust_flag)
+            vel = np.hstack(np.abs(u.v)); t = np.hstack(u.time)
+            gs_flg = np.zeros_like(clust_flag)
+            print(np.unique(clust_flag))
+            for c in np.unique(clust_flag):
+                print("Cluster ---", c)
+                clust_mask = c == clust_flag
+                if c == -1: gs_flg[clust_mask] = -1
+                else: gs_flg[clust_mask] = utils.ribiero_gs_flg(vel[clust_mask], t[clust_mask])
+            u["ribiero_gflg"] = gs_flg
+            for beam in range(7,8):
+                df = u[u.bmnum==beam]
+                fig_title = "Rad:{rad}, Model:{a_name}, Beam:{bm}, Date:{dn} UT".format(rad=rad, a_name=a_name, bm="%02d"%beam,
+                                                                                    dn=dn.strftime("%Y-%m-%d"))
+                ldir = "../outputs/figures/{rad}/{dn}/".format(rad=rad, dn=dn.strftime("%Y-%m-%d"))
+                os.system("mkdir -p " + ldir)
+                fname = "../outputs/figures/{rad}/{dn}/{bm}.{a_name}{gt}.png".format(rad=rad, dn=dn.strftime("%Y-%m-%d"), 
+                                                                           bm="%02d"%beam, a_name=a_name, gt=gmm_tag)
+                rti = RangeTimePlot(100, np.unique(df.time), fig_title, num_subplots=6)
+                rti.addParamPlot(df, beam, "Velocity", p_max=100, p_min=-100, p_step=25, xlabel="", zparam="v", label="Velocity [m/s]")
+                rti.addParamPlot(df, beam, "Power", p_max=30, p_min=3, p_step=3, xlabel="", zparam="p_l", label="Power [dB]")
+                rti.addParamPlot(df, beam, "Spec. Width", p_max=100, p_min=0, p_step=10, xlabel="", zparam="w_l", label="Spec. Width [m/s]")
+                rti.addCluster(df, beam, a_name, label_clusters=True, skill=None, xlabel="")
+                rti.addGSIS(df, beam, GS_CASES[case], xlabel="", zparam="gflg_%d_0"%case)
+                rti.addGSIS(df, beam, "Ribiero", xlabel="Time, UT", zparam="ribiero_gflg")
+                rti.save(fname)
+                rti.close()
+            #os.system("rm -rf ../outputs/cluster_tags/*")
+        ix += 1
+        if ix == 1: break
+    return

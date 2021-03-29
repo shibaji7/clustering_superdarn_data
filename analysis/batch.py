@@ -167,8 +167,25 @@ def plot_2D_histograms():
         I += 1
     return
 
+def plot_RTI_riberio():
+    from statistics import ribiero_gflg_RTI
+    gmm_tag = "-gmm" if gmm else ""
+    df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
+    I = 0
+    for start, end, rad, e in zip(df.event_start, df.event_end, df.rad, df.event_type):
+        dates, rads = [], []
+        dn = start
+        while dn <= end:
+            dates.append(dn)
+            rads.append(rad)
+            dn = dn + dt.timedelta(days=1)
+        ribiero_gflg_RTI(rads, dates, a_name, gmm=gmm, case=2, kind=0)
+        I += 1
+        break
+    return
+
 if __name__ == "__main__":
-    method = 5
+    method = 8
     if method == 1: create_pickle_files()
     if method == 2: run_algorithms()
     if method == 3: estimate_skill_stats()
@@ -176,4 +193,5 @@ if __name__ == "__main__":
     if method == 5: plot_RTI()
     if method == 6: plot_individual_scatter_histograms()
     if method == 7: plot_2D_histograms()
+    if method == 8: plot_RTI_riberio()
     pass
