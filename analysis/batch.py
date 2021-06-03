@@ -10,7 +10,7 @@ import utils
 import plotlib
 
 LFS = "LFS/LFS_clustering_superdarn_data/"
-a_name = "gb-dbscan"
+a_name = "dbscan"
 parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "pow", "clust_flg"]
 isgs = {"thresh":[0.5,0.5], "pth":0.5}
 plot_params = ["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"]
@@ -21,16 +21,20 @@ save = True
 def create_pickle_files():
     # Code to convert any day / radar to ".pickle" file for processing
     from pickle_creator import to_pickle_files
+    pubfile = utils.get_pubfile()
+    conn = utils.get_session(key_filename=pubfile)
     df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
     dask_out = []
+    lfname = []
     for start, end, rad in zip(df.event_start, df.event_end, df.rad):
         dn = start
         while dn <= end:
-            fname = "../data/%s_%s_scans.pickle"%(rad, dn.strftime("%Y-%m-%d"))
-            if not os.path.exists(fname):
-                dask_out.append(dask.delayed(to_pickle_files)([dn], [rad]))
+            fname = LFS + "data/%s_%s_scans.pickle"%(rad, dn.strftime("%Y-%m-%d"))
+            if not utils.chek_remote_file_exists(fname, conn):
+                dask_out.append(dask.delayed(to_pickle_files)([dn], [rad], conn, LFS, is_local_remove=True))
             dn = dn + dt.timedelta(days=1)
     _ = [do.compute() for do in dask_out]
+    conn.close()
     return
 
 def run_algorithms():
@@ -181,7 +185,12 @@ def plot_RTI_riberio():
             dn = dn + dt.timedelta(days=1)
         ribiero_gflg_RTI(rads, dates, a_name, gmm=gmm, case=2, kind=0)
         I += 1
-        break
+    return
+
+def compare_with_rnn():
+    create_pickle_files()
+    run_algorithms()
+    plot_RTI_riberio()
     return
 
 if __name__ == "__main__":
@@ -194,4 +203,5 @@ if __name__ == "__main__":
     if method == 6: plot_individual_scatter_histograms()
     if method == 7: plot_2D_histograms()
     if method == 8: plot_RTI_riberio()
+    if method == 9: compare_with_rnn()
     pass

@@ -315,7 +315,9 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
             floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
             dn = dn + dt.timedelta(days=1)
             y = pd.read_csv(floc)
-            y = y[y["gflg_%d_%d"%(case,kind)]==sctr]
+            #y = y[y["gflg_%d_%d"%(case,kind)]==sctr]
+            y = utils._run_riberio_threshold_on_rad(y)
+            y = y[y["ribiero_gflg"]==sctr]
             y = y.replace([np.inf, -np.inf], np.nan).dropna()
             X = pd.concat([X, y[params]])
     X = X[params].values
@@ -325,8 +327,8 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     v[v==0] = 1e-5
     v = np.sign(v)*np.log10(np.abs(v))
     vhist, vbins = np.histogram(v, bins=fp_details["v"]["bins"], density=True)
-    find_peaks(ax, vbins, vhist, dist=fp_details["v"]["dist"], ids=fp_details["v"]["ids"], lim=fp_details["v"]["ylim"][1],
-              rotation=fp_details["v"]["rot"], dh=fp_details["v"]["dh"], log=fp_details["v"]["log"], param_name="Velocity")
+    #find_peaks(ax, vbins, vhist, dist=fp_details["v"]["dist"], ids=fp_details["v"]["ids"], lim=fp_details["v"]["ylim"][1],
+    #          rotation=fp_details["v"]["rot"], dh=fp_details["v"]["dh"], log=fp_details["v"]["log"], param_name="Velocity")
     ax.hist(v, bins=fp_details["v"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
     ax.set_xlim(-4,4)
     ax.set_xticklabels([r"-$10^4$", r"-$10^2$", r"$10^0$", r"$10^2$", r"$10^4$"])
@@ -338,8 +340,8 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     w[w==0] = 1e-5
     w = np.sign(w)*np.log10(np.abs(w))
     whist, wbins = np.histogram(w, bins=fp_details["w_l"]["bins"], density=True)
-    find_peaks(ax, wbins, whist, dist=fp_details["w_l"]["dist"], ids=fp_details["w_l"]["ids"], lim=fp_details["w_l"]["ylim"][1],
-              rotation=fp_details["w_l"]["rot"], dh=fp_details["w_l"]["dh"], log=fp_details["w_l"]["log"], param_name="Spect. Width")
+    #find_peaks(ax, wbins, whist, dist=fp_details["w_l"]["dist"], ids=fp_details["w_l"]["ids"], lim=fp_details["w_l"]["ylim"][1],
+    #          rotation=fp_details["w_l"]["rot"], dh=fp_details["w_l"]["dh"], log=fp_details["w_l"]["log"], param_name="Spect. Width")
     ax.hist(w, bins=fp_details["w_l"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
     ax.set_xlabel(r"Spect. Width, $ms^{-1}$")
     ax.set_xlim(-2,4)
@@ -351,8 +353,8 @@ def histograms_scatters(rads, a_name, starts, ends, sctr=-1, gmm=False, case=0, 
     ax.text(1.02, 0.8, "ACFs~ %dK"%(len(v)/1000), ha="left", va="center", transform=ax.transAxes, rotation=90, fontdict={"size":7,"color":"r"})
     ax.text(0.5, 1.05, "GS: "+det_type[case], ha="left", va="center", transform=ax.transAxes, fontdict={"size":7,"color":"r"})
     phist, pbins = np.histogram(p, bins=fp_details["p"]["bins"], density=True)
-    find_peaks(ax, pbins, phist, dist=fp_details["p"]["dist"], ids=fp_details["p"]["ids"], lim=fp_details["p"]["ylim"][1],
-              rotation=fp_details["p"]["rot"], dh=fp_details["p"]["dh"], log=fp_details["p"]["log"], param_name="Power")
+    #find_peaks(ax, pbins, phist, dist=fp_details["p"]["dist"], ids=fp_details["p"]["ids"], lim=fp_details["p"]["ylim"][1],
+    #          rotation=fp_details["p"]["rot"], dh=fp_details["p"]["dh"], log=fp_details["p"]["log"], param_name="Power")
     ax.hist(p, bins=fp_details["p"]["bins"], histtype="step", lw=0.9, ls="-", color="b", density=True)
     ax.set_xlabel("Power, dB")
     ax.set_xlim([0,20])
@@ -536,7 +538,7 @@ def plot_2D_hist(rads, dates, a_name, gmm, case, kind, png_fname):
     suntime = {"doy":[], "sunrise":[], "sunset":[]}
     for rad, dn in zip(rads, dates):
         floc = fname.format(rad=rad, a_name=a_name, dn=dn.strftime("%Y%m%d"))
-        utils.fetch_file(conn, floc, LFS)
+        if not os.path.exists(floc): utils.fetch_file(conn, floc, LFS)
         if os.path.exists(floc):
             hdw = pydarn.read_hdw_file(rad)
             o = Observer(hdw.geographic.lat, hdw.geographic.lon)
@@ -545,14 +547,16 @@ def plot_2D_hist(rads, dates, a_name, gmm, case, kind, png_fname):
             suntime["sunrise"].append(s["sunrise"].hour + (dumin/60.)*int(s["sunrise"].minute/dumin))
             suntime["sunset"].append(s["sunset"].hour + (dumin/60.)*int(s["sunset"].minute/dumin))
             u = pd.read_csv(floc)
+            u = utils._run_riberio_threshold_on_rad(u)
             u.time = u.time.apply(lambda t: num2date(t, tz=pytz.timezone("UTC")))
             u["ut"], u["doy"], u["umin"] = u.time.dt.hour, u.time.dt.dayofyear,\
                         u.time.apply(lambda t: t.hour + (dumin/60.)*int(t.minute/dumin))
             X = pd.concat([X, u])
-            os.system("rm -rf ../outputs/cluster_tags/*")
+            #os.system("rm -rf ../outputs/cluster_tags/*")
         #if ix == 3: break
         ix += 1
-    X = X[["time", "slist", "bmnum", "trad_gsflg", "gflg_%d_%d"%(case,kind), "ut", "doy", "umin"]]
+    os.system("rm -rf ../outputs/cluster_tags/*")
+    X = X[["time", "slist", "bmnum", "trad_gsflg", "gflg_%d_%d"%(case,kind), "ut", "doy", "umin", "ribiero_gflg"]]
     ax = axes[0,0]
     ax.set_xlabel("UT")
     ax.set_ylabel("DoY")
@@ -572,16 +576,16 @@ def plot_2D_hist(rads, dates, a_name, gmm, case, kind, png_fname):
     ax = axes[0,1]
     ax.set_xlabel("UT")
     ax.set_ylabel("DoY")
-    ax.text(0.1,1.03,"IS: Blanchard.09",ha="left",va="center",transform=ax.transAxes)
-    _xx, _yy, _zz, _x, _y = to_2dhist(X, "gflg_%d_%d"%(case,kind), 0)
+    ax.text(0.1,1.03,"IS: Riberio.11",ha="left",va="center",transform=ax.transAxes)
+    _xx, _yy, _zz, _x, _y = to_2dhist(X, "ribiero_gflg", 0)#"gflg_%d_%d"%(case,kind)
     ax.pcolormesh(_xx, _yy, _zz.T, cmap="jet")
     ax.plot(suntime["sunrise"], suntime["doy"], color="k", lw=1.5, ls="--")
     ax.plot(suntime["sunset"], suntime["doy"], color="k", lw=1.5, ls="--")
     ax = axes[1,1]
     ax.set_xlabel("UT")
     ax.set_ylabel("DoY")
-    ax.text(0.1,1.03,"GS: Blanchard.09",ha="left",va="center",transform=ax.transAxes)
-    _xx, _yy, _zz, _x, _y = to_2dhist(X, "gflg_%d_%d"%(case,kind), 1)
+    ax.text(0.1,1.03,"GS: Riberio.11",ha="left",va="center",transform=ax.transAxes)
+    _xx, _yy, _zz, _x, _y = to_2dhist(X, "ribiero_gflg", 1)
     ax.pcolormesh(_xx, _yy, _zz.T, cmap="jet")
     ax.plot(suntime["sunrise"], suntime["doy"], color="k", lw=1.5, ls="--")
     ax.plot(suntime["sunset"], suntime["doy"], color="k", lw=1.5, ls="--")

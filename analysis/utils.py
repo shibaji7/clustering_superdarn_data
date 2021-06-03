@@ -331,6 +331,7 @@ def get_session(filename="config/passcode.json", key_filename="", isclose=False)
 
 def chek_remote_file_exists(fname, conn):
     try:
+        print("File Check:",fname)
         conn.scp.stat(fname)
         return True
     except FileNotFoundError:
@@ -377,7 +378,6 @@ def ribiero_gs_flg(vel, time):
     if low == 0: R = 1.0  # TODO hmm... this works right?
     else: R = high / low  # High vel / low vel ratio
     # See Figure 4 in Ribiero 2011
-    print(R)
     if L > 14.0:
         # Addition by us
         if R > 0.15: return False    # IS
@@ -400,7 +400,31 @@ def ribiero_gs_flg(vel, time):
     # Classic Ribiero 2011
     # else:
     #    return False
-    
+
+def _run_riberio_threshold(u, beam):
+    df = u[u.bmnum==beam]
+    clust_flag = np.array(df.labels); gs_flg = np.zeros_like(clust_flag)
+    vel = np.hstack(np.abs(df.v)); t = np.hstack(df.time)
+    gs_flg = np.zeros_like(clust_flag)
+    for c in np.unique(clust_flag):
+        clust_mask = c == clust_flag
+        if c == -1: gs_flg[clust_mask] = -1
+        else: gs_flg[clust_mask] = ribiero_gs_flg(vel[clust_mask], t[clust_mask])
+    df["ribiero_gflg"] = gs_flg
+    return df
+
+def _run_riberio_threshold_on_rad(u):
+    df = u.copy()
+    clust_flag = np.array(df.labels); gs_flg = np.zeros_like(clust_flag)
+    vel = np.hstack(np.abs(df.v)); t = np.hstack(df.time)
+    gs_flg = np.zeros_like(clust_flag)
+    for c in np.unique(clust_flag):
+        clust_mask = c == clust_flag
+        if c == -1: gs_flg[clust_mask] = -1
+        else: gs_flg[clust_mask] = ribiero_gs_flg(vel[clust_mask], t[clust_mask])
+    df["ribiero_gflg"] = gs_flg
+    return df
+
 if __name__ == "__main__":
     #encrypt("", "")
     #get_session(isclose=True)

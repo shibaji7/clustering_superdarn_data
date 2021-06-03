@@ -1,5 +1,2 @@
 event_start,event_end,rad,event_type
-2018-07-01,2018-07-31,cvw,quiet
-2018-07-01,2018-07-31,sas,quiet
-2015-06-01,2015-06-30,cvw,active
-2015-06-01,2015-06-30,sas,active
+2012-01-05,2012-01-08,cvw,quiet

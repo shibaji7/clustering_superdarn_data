@@ -1,4 +1,37 @@
-# Import python packages
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#-----------------------------------------------------------------------------
+# update_backscatter.py, Angeline G. Burrell (AGB), UoL
+#
+# Comments: Update the beam's groundscatter flag, calculate the virtual height
+#           and propagation path, determine the origin field-of-view, update
+#           the elevation.
+#-----------------------------------------------------------------------------
+
+
+"""
+    update_backscatter.py:
+    Routines to update the groundscatter and elevation angle, as well as determine
+    the virtual height, hop, and origin field-of-view for each backscatter point.
+    Functions
+    ------------------------------------------------------------------------------
+    assign_region               ionosphere region based on virtual height
+    test_propagation            test propgation against reality
+    select_alt_groups           determine altitude limits for range gate
+    get_beam                    load beams from list or pointer
+    calc_distance               calculate slant range
+    select_beam_groundscatter   filter to select groundscatter data
+    calc_frac_points            calculate precentage of groundscatter
+    update_bs_w_scan            update propagation parameters, 1 > beam
+    update_beam_fit             update beam data
+    update_backscatter          update propagation parameters, one beam
+    beam_ut_struct_test         test for continuity in UT across beams
+    ------------------------------------------------------------------------------
+    Author: Angeline G. Burrell (AGB)
+    Date: January 15, 2015
+    Inst: University of Leicester (UoL)
+"""
+
 import numpy as np
 from scipy import constants as scicon
 from scipy import stats as stats
@@ -278,12 +311,12 @@ def get_beam(radar_beams, nbeams):
 #----------------------------------------------------------------------------
 def calc_distance(beam, rg_attr="slist", dist_units="km", hop=.5):
     
-    import davitpy.pydarn.sdio as sdio
+    from get_sd_data import Beam
 
     #---------------------------------
     # Check the input
     estr = None
-    if not isinstance(beam, sdio.radDataTypes.beamData):
+    if not isinstance(beam, Beam):
         estr = 'the beam must be a beamData class'
     elif not isinstance(rg_attr, str) or not hasattr(beam.fit, rg_attr):
         estr = 'no range gate attribute [{:}]'.format(rg_attr)
@@ -294,7 +327,7 @@ def calc_distance(beam, rg_attr="slist", dist_units="km", hop=.5):
     else:
         # Load the range gate data
         try:
-            rg = getattr(beam.fit, rg_attr)
+            rg = getattr(beam, rg_attr)
 
             if not isinstance(rg, list) or len(rg) == 0:
                 estr = 'unable to load range gate'
@@ -372,11 +405,11 @@ def select_beam_groundscatter(beam, dist, min_rg=10, max_rg=76, rg_box=5,
 
     If there is an input error, exits with an exception
     """
-    import davitpy.pydarn.sdio as sdio
+    from get_sd_data import Beam
 
     #---------------------
     # Check input
-    assert isinstance(beam, sdio.radDataTypes.beamData), \
+    assert isinstance(beam, Beam), \
         logging.error("beam is not a beamData object")
     assert((isinstance(dist, list) or isinstance(dist, np.ndarray))
            and len(dist) == len(beam.fit.slist)), \
@@ -515,11 +548,11 @@ def calc_frac_points(beam, dat_attr, dat_index, central_index, box,
 
     If there is an input error, exits with an exception
     """
-    import davitpy.pydarn.sdio as sdio
+    from get_sd_data import Beam
 
     #----------------
     # Check input
-    assert isinstance(beam, sdio.radDataTypes.beamData), \
+    assert isinstance(beam, Beam), \
         logging.error("beam is not a beamData object")
     assert isinstance(dat_attr, str) and hasattr(beam.fit, dat_attr), \
         logging.error("beam does not contain attribute {:}".format(dat_attr))
@@ -532,7 +565,7 @@ def calc_frac_points(beam, dat_attr, dat_index, central_index, box,
         logging.error("dat_max is of a different type is suspect")
 
     # Get the data list and ensure there is a value to search about
-    data = getattr(beam.fit, dat_attr)
+    data = getattr(beam, dat_attr)
     assert isinstance(central_index, int) and central_index < len(data), \
         logging.error("no value for central_index in {:s}".format(dat_attr))
 
@@ -690,7 +723,7 @@ def update_bs_w_scan(scan, hard, min_pnts=3,
         beam.prm.tdiff : added : tdiff used in elevation (microsec)
         beam.prm.tdiff_e : added : tdiff error (microsec)
     """
-    import davitpy.pydarn.sdio as sdio
+    from get_sd_data import Beam
     import davitpy.pydarn.radar as pyrad
 
     max_std = 3.0 # This is the maximum standard deviation in degrees.
@@ -703,7 +736,7 @@ def update_bs_w_scan(scan, hard, min_pnts=3,
     # Test input
     if(not ((isinstance(scan, list) or isinstance(scan, np.ndarray)) and
             len(scan) > 0 and len(scan) <= hard.maxbeam and
-            isinstance(scan[0], sdio.radDataTypes.beamData))
+            isinstance(scan[0], Beam))
        and not isinstance(scan, sdio.radDataTypes.radDataPtr)):
         estr = 'need a list of beams or a radar data pointer with [1-'
         estr = '{:s}{:d}] beams: length={:d}'.format(estr, hard.maxbeam,
@@ -1429,8 +1462,8 @@ def update_beam_fit(beam, hard=None,
     import davitpy.pydarn.sdio as sdio
     import davitpy.pydarn.radar as pyrad
     import davitpy.utils.geoPack as geo
-    import davitpy.pydarn.proc.fov.calc_elevation as ce
-    import davitpy.pydarn.proc.fov.calc_height as ch
+    import calc_elevation as ce
+    import calc_height as ch
 
     #----------------------------------
     # Test input
@@ -1456,7 +1489,7 @@ def update_beam_fit(beam, hard=None,
 
     #-----------------------------------
     # Initialize FoV dependent values
-    slist = getattr(beam.fit, "slist")
+    slist = getattr(beam, "slist")
     elvs_aliased = {"front":[np.nan for s in slist],
                     "back":[np.nan for s in slist]}
     elva_errs = {"front":[np.nan for s in slist],

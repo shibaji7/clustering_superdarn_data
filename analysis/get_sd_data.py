@@ -48,10 +48,11 @@ class Gate(object):
 class Beam(object):
     """Class to hold one beam object"""
 
-    def __init__(self):
+    def __init__(self, _rad=None):
         """
         initialize the instance
         """
+        self.stid = _rad
         return
 
     def set(self, time, d, s_params=["bmnum", "noise.sky", "tfreq", "scan", "nrang"], 
@@ -255,7 +256,7 @@ class FetchData(object):
         for d in data:
             time = dt.datetime(d["time.yr"], d["time.mo"], d["time.dy"], d["time.hr"], d["time.mt"], d["time.sc"], d["time.us"])
             if time >= self.date_range[0] and time <= self.date_range[1]:
-                bm = Beam()
+                bm = Beam(self.rad)
                 bm.set(time, d, s_params,  v_params)
                 _b.append(bm)
         if self.verbose: print("\n Converted to beam data.")
@@ -306,7 +307,7 @@ class FetchData(object):
         return pd.DataFrame.from_records(_o)
 
     def fetch_data(self, s_params=["bmnum", "noise.sky", "tfreq", "scan", "nrang", "intt.sc", "intt.us",\
-            "mppul", "nrang", "rsep", "cp", "frang", "smsep", "lagfr", "channel"],
+            "mppul", "nrang", "rsep", "cp", "frang", "smsep", "lagfr", "channel", "bmazm"],
             v_params=["pwr0", "v", "w_l", "gflg", "p_l", "slist", "v_e", "elv"],
             by="beam", scan_prop={"dur": 1, "stype": "normal"}):
         """
