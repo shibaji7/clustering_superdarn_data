@@ -162,8 +162,8 @@ def pre_processing(date_range, rad, model_name = "rt_nn_model/weights.epoch_08.v
     conn.close()
     return
 
-def run_algorithm(date_range, rad, a_name="dbscan", gmm=True, save=True, rnn=True):
-    if rnn: parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "elv", "pow", "clust_flg", "hf_label", 
+def run_algorithm(date_range, rad, a_name="dbscan", gmm=False, save=True, rnn=True):
+    if rnn: parameters = ["gate", "time", "trad_gsflg", "elv", "pow", "clust_flg", "hf_label", 
                   "onehf_label", "one_label", "two_label", "no_label"]
     else: parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "elv", "pow", "clust_flg"]
     dates = []
@@ -175,7 +175,7 @@ def run_algorithm(date_range, rad, a_name="dbscan", gmm=True, save=True, rnn=Tru
     if gmm: gmm_tag = ".gmm"
     pubfile = utils.get_pubfile()
     conn = utils.get_session(key_filename=pubfile)
-    if rnn: features = ["gate", "beam", "vel", "wid", "time", "hf_label", "onehf_label", "one_label", "two_label", "no_label"]
+    if rnn: features = ["gate", "time", "hf_label", "onehf_label", "one_label", "two_label", "no_label"]
     else: features = ["gate", "beam", "vel", "wid", "time"]
     for dn in dates:
         local_file = "../data/%s_%s_scans_proc.pickle"%(rad, dn.strftime("%Y-%m-%d"))
@@ -240,5 +240,5 @@ if __name__ == "__main__":
     rnn = True
     #create_pickle_files([dt.datetime(2010,1,15), dt.datetime(2010,1,15)], "bks")
     #pre_processing([dt.datetime(2010,1,15), dt.datetime(2010,1,15)], "bks")
-    #run_algorithm([dt.datetime(2010,1,15), dt.datetime(2010,1,15)], "bks", rnn=rnn)
+    run_algorithm([dt.datetime(2010,1,15), dt.datetime(2010,1,15)], "bks", rnn=rnn)
     #plot_RTI_images([dt.datetime(2010,1,15), dt.datetime(2010,1,15)], "bks", rnn=rnn)

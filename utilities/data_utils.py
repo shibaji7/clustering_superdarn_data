@@ -90,7 +90,7 @@ def get_scan_nums(beams_flat):
     return scan_nums
 
 
-def get_data_dict_path(day, rad, data_dir='../data'):
+def get_data_dict_path(day, rad, data_dir='../data', rnn=False):
     """
     Get the path to a pickled data dictionary for a certain day
     :param day: datetime object
@@ -101,5 +101,6 @@ def get_data_dict_path(day, rad, data_dir='../data'):
     # Get data_dict from pickle file
     this_dir = os.path.abspath(os.path.dirname(__file__))
     date_str = day.strftime('%Y-%m-%d')
-    return "%s/%s/%s_%s_scans.pickle" % (this_dir, data_dir, rad, date_str)
+    if rnn: return "%s/%s/%s_%s_scans_proc.pickle" % (this_dir, data_dir, rad, date_str)
+    else: return "%s/%s/%s_%s_scans.pickle" % (this_dir, data_dir, rad, date_str)
 

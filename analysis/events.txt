@@ -1,2 +1,2 @@
 event_start,event_end,rad,event_type
-2012-01-05,2012-01-08,cvw,quiet
+2013-01-01,2013-12-31,cvw,quiet

@@ -51,10 +51,19 @@ class RangeTimePlot(object):
         self.fig = plt.figure(figsize=(8, 3*num_subplots), dpi=100) # Size for website
         plt.suptitle(fig_title, x=0.075, y=0.95, ha="left", fontweight="bold", fontsize=15)
         mpl.rcParams.update({"font.size": 10})
+        return
+    
+    def lay_sunrise_sunset(self, ax, ss_obj):
+        gate = ss_obj["gate"]
+        sunset = ss_obj["sunset"]
+        sunrise = ss_obj["sunrise"]
+        ax.plot(sunrise, gate, color="k", lw=1, ls="--")
+        ax.plot(sunset, gate, color="k", lw=1, ls="--")
+        return
         
     def addParamPlot(self, df, beam, title, p_max=100, p_min=-100, p_step=25, xlabel="Time UT", zparam="v",
-                    label="Velocity [m/s]"):
-        ax = self._add_axis()
+                    label="Velocity [m/s]", ax=None, fig=None, addcb=True, ss_obj=None):
+        if ax is None: ax = self._add_axis()
         df = df[df.bmnum==beam]
         X, Y, Z = utils.get_gridded_parameters(df, xparam="time", yparam="slist", zparam=zparam)
         bounds = list(range(p_min, p_max+1, p_step))
@@ -70,13 +79,15 @@ class RangeTimePlot(object):
         ax.set_ylim([0, self.nrang])
         ax.set_ylabel("Range gate", fontdict={"size":12, "fontweight": "bold"})
         ax.pcolormesh(X, Y, Z.T, lw=0.01, edgecolors="None", cmap=cmap, norm=norm)
-        self._add_colorbar(self.fig, ax, bounds, cmap, label=label)
+        if fig is None: fig = self.fig
+        if addcb: self._add_colorbar(fig, ax, bounds, cmap, label=label)
         ax.set_title(title, loc="left", fontdict={"fontweight": "bold"})
+        if ss_obj: self.lay_sunrise_sunset(ax, ss_obj)
         return
     
-    def addCluster(self, df, beam, title, xlabel="", label_clusters=True, skill=None):
+    def addCluster(self, df, beam, title, xlabel="", label_clusters=True, skill=None, ax=None, ss_obj=None):
         # add new axis
-        ax = self._add_axis()
+        if ax is None: ax = self._add_axis()
         df = df[df.bmnum==beam]
         unique_labs = np.sort(np.unique(df.labels))
         for i, j in zip(range(len(unique_labs)), unique_labs):
@@ -90,7 +101,7 @@ class RangeTimePlot(object):
             cmap = get_cluster_cmap(len(np.unique(flags)), plot_noise=False)
 
         # Lower bound for cmap is inclusive, upper bound is non-inclusive
-        bounds = list(range( len(np.unique(flags))+2 ))    # need (max_cluster+1) to be the upper bound
+        bounds = list(range( len(np.unique(flags)) ))    # need (max_cluster+1) to be the upper bound
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
         ax.xaxis.set_major_formatter(DateFormatter("%H:%M"))
         hours = mdates.HourLocator(byhour=range(0, 24, 4))
@@ -121,9 +132,9 @@ class RangeTimePlot(object):
                     ax.text(t_c[m], g[m], str(int(f)), fontdict={"size": 8, "fontweight": "bold"})  # Label cluster #
         return
     
-    def addGSIS(self, df, beam, title, xlabel="", zparam="gflg_0", clusters=None, label_clusters=False):
+    def addGSIS(self, df, beam, title, xlabel="", zparam="gflg_0", clusters=None, label_clusters=False, ax=None, ss_obj=None):
         # add new axis
-        ax = self._add_axis()
+        if ax is None: ax = self._add_axis()
         df = df[df.bmnum==beam]
         X, Y, Z = utils.get_gridded_parameters(df, xparam="time", yparam="slist", zparam=zparam,)
         flags = np.array(df[zparam]).astype(int)
@@ -180,7 +191,6 @@ class RangeTimePlot(object):
 
     def save(self, filepath):
         self.fig.savefig(filepath, bbox_inches="tight")
-
 
     def close(self):
         self.fig.clf()

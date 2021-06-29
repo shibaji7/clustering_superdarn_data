@@ -6,6 +6,8 @@ import json
 import traceback
 import numpy as np
 
+import multiprocessing as mlp
+
 import utils
 import plotlib
 
@@ -14,7 +16,7 @@ a_name = "dbscan"
 parameters = ["gate", "beam", "vel", "wid", "time", "trad_gsflg", "pow", "clust_flg"]
 isgs = {"thresh":[0.5,0.5], "pth":0.5}
 plot_params = ["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"]
-plot_beams=[7]
+plot_beams=[]
 gmm = True
 save = True
 
@@ -37,10 +39,24 @@ def create_pickle_files():
     conn.close()
     return
 
+def run_sample_algo(rad, st, et):
+    from statistics import run_algorithm
+    gmm_tag = ""
+    if gmm: gmm_tag = ".gmm"
+    try:
+        run_algorithm(None, rad, st, et, a_name, gmm=gmm, parameters = parameters, isgs=isgs, plot_beams=plot_beams, 
+                      plot_params=plot_params, save=save)
+    except:
+        print(" Error running algo - ", a_name,gmm_tag, rad, st)
+        traceback.print_exc()
+    return
+
 def run_algorithms():
+    pool = mlp.Pool(processes=12)
+    gmm_tag = ""
+    if gmm: gmm_tag = ".gmm"
     pubfile = utils.get_pubfile()
     conn = utils.get_session(key_filename=pubfile)
-    from statistics import run_algorithm
     df = pd.read_csv("events.txt", parse_dates=["event_start", "event_end"])
     dates, rads = [], []
     for start, end, rad in zip(df.event_start, df.event_end, df.rad):
@@ -51,23 +67,16 @@ def run_algorithms():
                 dates.append(dn)
                 rads.append(rad)
             dn = dn + dt.timedelta(days=1)
-    
+    args = []
     for date, rad in zip(dates, rads):
         print("Batch mode date, rad: %s, %s"%(date.strftime("%Y-%m-%d"), rad))
-        gmm_tag = ""
-        if gmm: gmm_tag = ".gmm"
         fname = LFS + "outputs/cluster_tags/{rad}.{a_name}{gmm_tag}.{dn}.csv".format(rad=rad, a_name=a_name,gmm_tag=gmm_tag,
                                                                                   dn=date.strftime("%Y%m%d"))
-        if not utils.chek_remote_file_exists(fname, conn):
-            try:
-                run_algorithm(conn, rad, date, date+dt.timedelta(days=1), a_name, gmm=gmm, 
-                              parameters = parameters, isgs=isgs, plot_beams=plot_beams, 
-                              plot_params=plot_params, save=save)
-            except:
-                print(" Error running algo - ", a_name,gmm_tag, rad, dn)
-                traceback.print_exc()
-            #break
+        if not utils.chek_remote_file_exists(fname, conn): args.append((rad, date, date+dt.timedelta(days=1)))
     conn.close()
+    pool.starmap(run_sample_algo, args)
+    pool.close()
+    pool.join()
     return
 
 def estimate_skill_stats():
@@ -187,14 +196,14 @@ def plot_RTI_riberio():
         I += 1
     return
 
-def compare_with_rnn():
+def rerun_modified_parameters():
     create_pickle_files()
     run_algorithms()
     plot_RTI_riberio()
     return
 
 if __name__ == "__main__":
-    method = 8
+    method = 2
     if method == 1: create_pickle_files()
     if method == 2: run_algorithms()
     if method == 3: estimate_skill_stats()
@@ -203,5 +212,5 @@ if __name__ == "__main__":
     if method == 6: plot_individual_scatter_histograms()
     if method == 7: plot_2D_histograms()
     if method == 8: plot_RTI_riberio()
-    if method == 9: compare_with_rnn()
+    if method == 9: rerun_modified_parameters()
     pass

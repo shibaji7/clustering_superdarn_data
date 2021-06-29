@@ -310,7 +310,7 @@ class Conn2Remote(object):
             self.ssh.close()
         return
     
-def encrypt(host, user, filename="passcode.json"):
+def encrypt(host, user, filename="config/passcode.json"):
     passcode = Fernet.generate_key()
     cipher_suite = Fernet(passcode)
     host = cipher_suite.encrypt(bytes(host, encoding="utf8"))
@@ -426,6 +426,6 @@ def _run_riberio_threshold_on_rad(u):
     return df
 
 if __name__ == "__main__":
-    #encrypt("", "")
+    encrypt("cascades1.arc.vt.edu", "shibaji7")
     #get_session(isclose=True)
     pass

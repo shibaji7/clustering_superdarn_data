@@ -12,15 +12,16 @@ class DBSCAN_GMM(GMMAlgorithm):
     Run DBSCAN on space/time features, then GMM on space/time/vel/wid
     """
     def __init__(self, start_time, end_time, rad,
-                 beam_eps=3, gate_eps=1, scan_eps=1,  # DBSCAN
+                 beam_eps=1, gate_eps=1, scan_eps=1,  # DBSCAN
                  minPts=5, eps=1,  # DBSCAN
-                 n_clusters=5, cov='full',  # GMM
+                 n_clusters=10, cov='full',  # GMM
                  features=['beam', 'gate', 'time', 'vel', 'wid'],  # GMM
                  BoxCox=False,  # GMM
                  load_model=False,
                  save_model=False,
                  save_output=False,
-                 run_gmm=True):
+                 run_gmm=True,
+                 rnn=False):
         super().__init__(start_time, end_time, rad,
                          {'scan_eps' : scan_eps,
                           'beam_eps': beam_eps,
@@ -30,7 +31,8 @@ class DBSCAN_GMM(GMMAlgorithm):
                           'n_clusters' : n_clusters,
                           'cov': cov,
                           'features': features,
-                          'BoxCox': BoxCox},
+                          'BoxCox': BoxCox,
+                          'rnn': rnn},
                          load_model=load_model)
         filepath = self._get_base_output_path()+"_dbgmm.csv"
         if not load_model:

@@ -19,12 +19,13 @@ class Algorithm(object):
         self.end_time = end_time
         self.rad = rad
         self.params = params
+        if "rnn" not in self.params.keys(): self.params["rnn"] = False
         if load_model:
             # Set instance vars equal to the pickled object's instance vars
             self.__dict__ = self._read_pickle()
         else:
             # Load data_dict from the data folder
-            path = get_data_dict_path(start_time, rad)
+            path = get_data_dict_path(start_time, rad, rnn=self.params["rnn"])
             data_dict = pickle.load(open(path, 'rb'))
             self.data_dict = self._filter_by_time(start_time, end_time, data_dict)
 
@@ -229,7 +230,8 @@ class Algorithm(object):
             raise Exception('No pickle file found for this time/radar/params/algorithm, try setting loadModel=False.')
 
     def _get_base_output_path(self):
-        return "../data/%s_%s_scans" % (self.rad, self.start_time.strftime('%Y-%m-%d'))
+        if self.params["rnn"]: return "../data/%s_%s_scans_proc" % (self.rad, self.start_time.strftime('%Y-%m-%d'))
+        else: return "../data/%s_%s_scans" % (self.rad, self.start_time.strftime('%Y-%m-%d'))
 
 
 class Traditional(Algorithm):

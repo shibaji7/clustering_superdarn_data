@@ -42,16 +42,17 @@ def estimate_df_skills(conn, df, skill_file, save):
 
 def save_tags_stats(conn, clusters, df, rad, a_name, dn, gmm_tag):
     dat = []
-    for case in clusters.keys():
-        for bm in clusters[case].keys():
-            for cls in clusters[case][bm].keys():
-                x = clusters[case][bm][cls]
-                x["idx"] = "%d_%d_%d"%(case,bm,cls)
-                dat.append(x)
-    d = pd.DataFrame.from_records(dat)
-    eff_file = "../outputs/efficiency/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=dn.strftime("%Y%m%d"))
-    d.to_csv(eff_file, index=False, header=True)
-    utils.to_remote_FS(conn, eff_file, LFS, is_local_remove=True)
+    if clusters:
+        for case in clusters.keys():
+            for bm in clusters[case].keys():
+                for cls in clusters[case][bm].keys():
+                    x = clusters[case][bm][cls]
+                    x["idx"] = "%d_%d_%d"%(case,bm,cls)
+                    dat.append(x)
+        d = pd.DataFrame.from_records(dat)
+        eff_file = "../outputs/efficiency/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=dn.strftime("%Y%m%d"))
+        d.to_csv(eff_file, index=False, header=True)
+        utils.to_remote_FS(conn, eff_file, LFS, is_local_remove=True)
     clust_file = "../outputs/cluster_tags/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=dn.strftime("%Y%m%d"))
     df.to_csv(clust_file, index=False, header=True)
     utils.to_remote_FS(conn, clust_file, LFS, is_local_remove=True)
@@ -69,6 +70,11 @@ def run_algorithm(conn, rad, start, end, a_name="dbscan", gmm=False,
                   plot_params=["vel", "wid", "pow", "cluster", "isgs", "cum_isgs"], save=True):
     gmm_tag = ""
     if gmm: gmm_tag = ".gmm"
+    close = False
+    if conn==None: 
+        close = True
+        pubfile = utils.get_pubfile()
+        conn = utils.get_session(key_filename=pubfile)
     local_file = "../data/%s_%s_scans.pickle"%(rad, start.strftime("%Y-%m-%d"))
     utils.from_remote_FS(conn, local_file, LFS)
     if a_name=="dbscan": algo = DBSCAN_GMM(start, end, rad, BoxCox=True, load_model=False, save_model=False, run_gmm=gmm)
@@ -78,9 +84,10 @@ def run_algorithm(conn, rad, start, end, a_name="dbscan", gmm=False,
     print(algo.data_dict.keys())
     df = to_pandas(algo.data_dict, keys=parameters)
     skill_file = "../outputs/skills/{rad}.{a_name}{gt}.{dn}.csv".format(rad=rad, a_name=a_name, gt=gmm_tag, dn=start.strftime("%Y%m%d"))
-    skills = estimate_df_skills(conn, df, skill_file, save)
-    std = ScatterTypeDetection(df.copy())
-    df, clusters = std.run(thresh=isgs["thresh"], pth=isgs["pth"])
+    #skills = estimate_df_skills(conn, df, skill_file, save)
+    clusters = None
+    #std = ScatterTypeDetection(df.copy())
+    #df, clusters = std.run(thresh=isgs["thresh"], pth=isgs["pth"])
     for beam in plot_beams:
         try:
             fig_title = "Rad:{rad}, Model:{a_name}, Beam:{bm}, Date:{dn} UT".format(rad=rad, a_name=a_name, bm="%02d"%beam,
@@ -111,6 +118,7 @@ def run_algorithm(conn, rad, start, end, a_name="dbscan", gmm=False,
                                                          algo=get_algo_name_remove_file(a_name, gmm))
     if os.path.exists(cache): os.remove(cache)
     os.system("rm -rf ../outputs/figures/*")
+    if close: conn.close()
     return
 
 def plot_rti_from_arc(conn, rad, date, a_name, gmm=False, plot_beams=[7], is_local_remove=False, 
@@ -144,7 +152,7 @@ def plot_rti_from_arc(conn, rad, date, a_name, gmm=False, plot_beams=[7], is_loc
             utils.to_remote_FS_dir(conn, ldir, fname, LFS, is_local_remove=is_local_remove)
         
     if cache_clean: os.system("rm -rf ../outputs/figures/*")
-    os.system("rm -rf ../outputs/cluster_tags/*")
+    #os.system("rm -rf ../outputs/cluster_tags/*")
     return
 
 def ribiero_gflg_RTI(rads, dates, a_name, gmm, case, kind):
@@ -184,5 +192,5 @@ def ribiero_gflg_RTI(rads, dates, a_name, gmm, case, kind):
                     traceback.print_exc()
                     print("Exception in printing beam:", beam)
         ix += 1
-    os.system("rm -rf ../outputs/cluster_tags/*")
+    #os.system("rm -rf ../outputs/cluster_tags/*")
     return
